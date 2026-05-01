@@ -143,8 +143,8 @@ def update_user(
             models.RadCheck.attribute == "Cleartext-Password",
         ).limit(1)
     ).scalar_one_or_none()
-    if not existing_pwd and payload.password is None:
-        # check the user actually exists
+    if not existing_pwd:
+        # PATCH must only update existing users — verify the user exists by any attribute
         any_attr = db.execute(
             select(models.RadCheck).where(models.RadCheck.username == username).limit(1)
         ).scalar_one_or_none()

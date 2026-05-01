@@ -138,8 +138,8 @@ export default function Dashboard() {
                     }}
                   />
                   <Legend />
-                  <Bar dataKey="accepts" fill="#10b981" name={t("dashboard.stats.auth_accepts_today").replace(/today.*$/i, "")} />
-                  <Bar dataKey="rejects" fill="#ef4444" name={t("dashboard.stats.auth_rejects_today").replace(/today.*$/i, "")} />
+                  <Bar dataKey="accepts" fill="#10b981" name={t("dashboard.chart.accepts")} />
+                  <Bar dataKey="rejects" fill="#ef4444" name={t("dashboard.chart.rejects")} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
