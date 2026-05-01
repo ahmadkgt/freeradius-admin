@@ -1,0 +1,141 @@
+{
+  "app": {
+    "title": "إدارة FreeRADIUS",
+    "subtitle": "إدارة الوصول إلى الشبكة"
+  },
+  "nav": {
+    "dashboard": "لوحة التحكم",
+    "users": "المستخدمون",
+    "groups": "المجموعات",
+    "nas": "أجهزة NAS / العملاء",
+    "accounting": "السجلات والجلسات",
+    "auth_log": "سجل المصادقة"
+  },
+  "common": {
+    "search": "بحث",
+    "create": "إنشاء",
+    "edit": "تعديل",
+    "save": "حفظ",
+    "cancel": "إلغاء",
+    "delete": "حذف",
+    "confirm": "تأكيد",
+    "yes": "نعم",
+    "no": "لا",
+    "actions": "إجراءات",
+    "loading": "جارٍ التحميل…",
+    "no_data": "لا توجد بيانات",
+    "page": "صفحة",
+    "of": "من",
+    "previous": "السابق",
+    "next": "التالي",
+    "language": "اللغة",
+    "english": "English",
+    "arabic": "العربية",
+    "theme": "السمة",
+    "light": "فاتح",
+    "dark": "داكن",
+    "all": "الكل",
+    "filter": "تصفية",
+    "refresh": "تحديث",
+    "close": "إغلاق",
+    "details": "تفاصيل",
+    "back": "رجوع",
+    "name": "الاسم",
+    "type": "النوع",
+    "value": "القيمة",
+    "operator": "العامل",
+    "attribute": "السمة",
+    "add": "إضافة",
+    "remove": "حذف",
+    "username": "اسم المستخدم",
+    "password": "كلمة المرور",
+    "groups": "المجموعات",
+    "framed_ip": "عنوان IP المخصص"
+  },
+  "dashboard": {
+    "title": "نظرة عامة",
+    "stats": {
+      "total_users": "إجمالي المستخدمين",
+      "total_groups": "إجمالي المجموعات",
+      "total_nas": "عملاء RADIUS",
+      "active_sessions": "الجلسات النشطة",
+      "sessions_today": "جلسات اليوم",
+      "auth_accepts_today": "قبول اليوم",
+      "auth_rejects_today": "رفض اليوم",
+      "total_traffic": "إجمالي حركة البيانات"
+    },
+    "auth_chart": "نشاط المصادقة (آخر 7 أيام)",
+    "top_users": "أكثر المستخدمين استهلاكاً",
+    "sessions": "جلسة",
+    "no_data": "لا يوجد نشاط حتى الآن"
+  },
+  "users": {
+    "title": "المستخدمون",
+    "create": "إنشاء مستخدم",
+    "edit": "تعديل المستخدم",
+    "delete_confirm": "هل تريد حذف المستخدم '{{username}}'؟ سيؤدي هذا إلى إزالة جميع سمات RADIUS وعلاقات المجموعة.",
+    "search_placeholder": "ابحث باسم المستخدم…",
+    "groups_placeholder": "أسماء المجموعات مفصولة بفواصل",
+    "fields": {
+      "check_attrs": "سمات التحقق",
+      "reply_attrs": "سمات الاستجابة",
+      "no_attrs": "لا توجد سمات"
+    }
+  },
+  "groups": {
+    "title": "المجموعات",
+    "create": "إنشاء مجموعة",
+    "delete_confirm": "هل تريد حذف المجموعة '{{groupname}}'؟ سيؤدي هذا إلى إزالة جميع السمات وارتباطات المستخدمين بهذه المجموعة.",
+    "members": "الأعضاء",
+    "no_members": "لا يوجد أعضاء",
+    "fields": {
+      "check_attrs": "سمات التحقق",
+      "reply_attrs": "سمات الاستجابة"
+    }
+  },
+  "nas": {
+    "title": "أجهزة NAS / عملاء RADIUS",
+    "create": "إضافة عميل",
+    "edit": "تعديل العميل",
+    "delete_confirm": "هل تريد حذف عميل RADIUS '{{nasname}}'؟",
+    "fields": {
+      "nasname": "عنوان NAS",
+      "shortname": "الاسم المختصر",
+      "type": "النوع",
+      "ports": "المنافذ",
+      "secret": "السرّ المشترك",
+      "server": "الخادم",
+      "community": "Community",
+      "description": "الوصف"
+    }
+  },
+  "accounting": {
+    "title": "السجلات / الجلسات",
+    "active_only": "النشطة فقط",
+    "fields": {
+      "session_id": "معرّف الجلسة",
+      "username": "المستخدم",
+      "nas_ip": "عنوان NAS",
+      "framed_ip": "عنوان IP المخصص",
+      "calling_station": "محطة الاتصال",
+      "start": "البدء",
+      "stop": "الانتهاء",
+      "duration": "المدة",
+      "input": "وارد",
+      "output": "صادر",
+      "cause": "سبب الإنهاء",
+      "active": "نشطة"
+    }
+  },
+  "auth_log": {
+    "title": "سجل المصادقة",
+    "fields": {
+      "username": "المستخدم",
+      "reply": "النتيجة",
+      "date": "التاريخ"
+    },
+    "filter_all": "الكل",
+    "filter_accept": "مقبولة",
+    "filter_reject": "مرفوضة"
+  }
+}
