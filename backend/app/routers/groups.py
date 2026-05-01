@@ -75,10 +75,9 @@ def get_group(groupname: str, db: Session = Depends(get_db)) -> schemas.GroupDet
 def create_group(
     payload: schemas.GroupCreate, db: Session = Depends(get_db)
 ) -> schemas.GroupDetail:
+    sub = _all_group_names_subquery()
     existing = db.execute(
-        select(models.RadGroupCheck).where(
-            models.RadGroupCheck.groupname == payload.groupname
-        ).limit(1)
+        select(sub.c.groupname).where(sub.c.groupname == payload.groupname).limit(1)
     ).scalar_one_or_none()
     if existing:
         raise HTTPException(status_code=409, detail="Group already exists")

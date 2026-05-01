@@ -65,6 +65,10 @@
       "total_traffic": "Total traffic"
     },
     "auth_chart": "Authentication activity (last 7 days)",
+    "chart": {
+      "accepts": "Accepts",
+      "rejects": "Rejects"
+    },
     "top_users": "Top users by traffic",
     "sessions": "sessions",
     "no_data": "No activity yet"
