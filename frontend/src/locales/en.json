@@ -1,0 +1,141 @@
+{
+  "app": {
+    "title": "FreeRADIUS Admin",
+    "subtitle": "Network access management"
+  },
+  "nav": {
+    "dashboard": "Dashboard",
+    "users": "Users",
+    "groups": "Groups",
+    "nas": "NAS / Clients",
+    "accounting": "Accounting",
+    "auth_log": "Auth log"
+  },
+  "common": {
+    "search": "Search",
+    "create": "Create",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "yes": "Yes",
+    "no": "No",
+    "actions": "Actions",
+    "loading": "Loading…",
+    "no_data": "No data",
+    "page": "Page",
+    "of": "of",
+    "previous": "Previous",
+    "next": "Next",
+    "language": "Language",
+    "english": "English",
+    "arabic": "العربية",
+    "theme": "Theme",
+    "light": "Light",
+    "dark": "Dark",
+    "all": "All",
+    "filter": "Filter",
+    "refresh": "Refresh",
+    "close": "Close",
+    "details": "Details",
+    "back": "Back",
+    "name": "Name",
+    "type": "Type",
+    "value": "Value",
+    "operator": "Op",
+    "attribute": "Attribute",
+    "add": "Add",
+    "remove": "Remove",
+    "username": "Username",
+    "password": "Password",
+    "groups": "Groups",
+    "framed_ip": "Framed IP"
+  },
+  "dashboard": {
+    "title": "Overview",
+    "stats": {
+      "total_users": "Total users",
+      "total_groups": "Total groups",
+      "total_nas": "RADIUS clients",
+      "active_sessions": "Active sessions",
+      "sessions_today": "Sessions today",
+      "auth_accepts_today": "Accepts today",
+      "auth_rejects_today": "Rejects today",
+      "total_traffic": "Total traffic"
+    },
+    "auth_chart": "Authentication activity (last 7 days)",
+    "top_users": "Top users by traffic",
+    "sessions": "sessions",
+    "no_data": "No activity yet"
+  },
+  "users": {
+    "title": "Users",
+    "create": "Create user",
+    "edit": "Edit user",
+    "delete_confirm": "Delete user '{{username}}'? This removes all RADIUS attributes and group bindings.",
+    "search_placeholder": "Search by username…",
+    "groups_placeholder": "Comma-separated group names",
+    "fields": {
+      "check_attrs": "Check attributes",
+      "reply_attrs": "Reply attributes",
+      "no_attrs": "No attributes"
+    }
+  },
+  "groups": {
+    "title": "Groups",
+    "create": "Create group",
+    "delete_confirm": "Delete group '{{groupname}}'? This removes all attributes and user assignments for this group.",
+    "members": "Members",
+    "no_members": "No members",
+    "fields": {
+      "check_attrs": "Check attributes",
+      "reply_attrs": "Reply attributes"
+    }
+  },
+  "nas": {
+    "title": "NAS / RADIUS clients",
+    "create": "Add client",
+    "edit": "Edit client",
+    "delete_confirm": "Delete RADIUS client '{{nasname}}'?",
+    "fields": {
+      "nasname": "NAS address",
+      "shortname": "Short name",
+      "type": "Type",
+      "ports": "Ports",
+      "secret": "Shared secret",
+      "server": "Server",
+      "community": "Community",
+      "description": "Description"
+    }
+  },
+  "accounting": {
+    "title": "Accounting / Sessions",
+    "active_only": "Active only",
+    "fields": {
+      "session_id": "Session ID",
+      "username": "Username",
+      "nas_ip": "NAS IP",
+      "framed_ip": "Framed IP",
+      "calling_station": "Calling station",
+      "start": "Start",
+      "stop": "Stop",
+      "duration": "Duration",
+      "input": "In",
+      "output": "Out",
+      "cause": "Terminate cause",
+      "active": "Active"
+    }
+  },
+  "auth_log": {
+    "title": "Authentication log",
+    "fields": {
+      "username": "Username",
+      "reply": "Result",
+      "date": "Date"
+    },
+    "filter_all": "All",
+    "filter_accept": "Accepted",
+    "filter_reject": "Rejected"
+  }
+}
