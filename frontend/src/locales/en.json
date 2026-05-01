@@ -141,5 +141,21 @@
     "filter_all": "All",
     "filter_accept": "Accepted",
     "filter_reject": "Rejected"
+  },
+  "auth": {
+    "title": "Sign in",
+    "subtitle": "FreeRADIUS Admin",
+    "sign_in": "Sign in",
+    "logout": "Sign out",
+    "error_invalid": "Invalid username or password",
+    "change_password": "Change password",
+    "change_password_desc": "Set a new password for your admin account.",
+    "change_password_success": "Password updated successfully.",
+    "change_password_failed": "Could not update password.",
+    "current_password": "Current password",
+    "new_password": "New password",
+    "confirm_password": "Confirm new password",
+    "password_too_short": "New password must be at least 8 characters.",
+    "passwords_dont_match": "New passwords do not match."
   }
 }

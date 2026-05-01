@@ -4,6 +4,29 @@ const baseURL = import.meta.env.VITE_API_URL ?? "/api";
 
 export const api = axios.create({ baseURL });
 
+const TOKEN_STORAGE_KEY = "freeradius-admin-token";
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem(TOKEN_STORAGE_KEY);
+  if (token) {
+    config.headers.set("Authorization", `Bearer ${token}`);
+  }
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    const status = error?.response?.status;
+    const url = error?.config?.url ?? "";
+    // Don't trigger logout on the login call itself — let the form show the error.
+    if (status === 401 && !url.includes("/auth/login")) {
+      window.dispatchEvent(new Event("auth:logout"));
+    }
+    return Promise.reject(error);
+  },
+);
+
 export interface Paginated<T> {
   items: T[];
   total: number;

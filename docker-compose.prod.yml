@@ -1,0 +1,45 @@
+# Production overlay. Use with:
+#   docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d --build
+#
+# Reads all secrets from .env in the project root. See .env.example.
+
+services:
+  db:
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-radius}
+      MYSQL_USER: ${MYSQL_USER:-radius}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    # Bind MySQL to localhost only — never expose it to the public internet.
+    ports:
+      - "127.0.0.1:3306:3306"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "mysqladmin",
+          "ping",
+          "-h",
+          "localhost",
+          "-u${MYSQL_USER:-radius}",
+          "-p${MYSQL_PASSWORD}",
+        ]
+
+  backend:
+    environment:
+      DATABASE_URL: mysql+pymysql://${MYSQL_USER:-radius}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE:-radius}?charset=utf8mb4
+      CORS_ORIGINS: ${CORS_ORIGINS}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_ALGORITHM: ${JWT_ALGORITHM:-HS256}
+      JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-480}
+      INITIAL_ADMIN_USERNAME: ${INITIAL_ADMIN_USERNAME:-admin}
+      INITIAL_ADMIN_PASSWORD: ${INITIAL_ADMIN_PASSWORD}
+    # Bind backend to localhost only; the frontend container reverse-proxies /api
+    # over the internal Docker network, and the host-level nginx reverse proxies
+    # to the frontend on 127.0.0.1:8080.
+    ports:
+      - "127.0.0.1:8000:8000"
+
+  frontend:
+    ports:
+      - "127.0.0.1:8080:80"
