@@ -8,6 +8,14 @@ class Settings(BaseSettings):
     cors_origins: str = "http://localhost:5173,http://localhost:3000"
     app_name: str = "FreeRADIUS Admin API"
 
+    # --- Auth ---
+    jwt_secret: str = "change-me-in-production-please-set-a-long-random-string"
+    jwt_algorithm: str = "HS256"
+    jwt_expire_minutes: int = 60 * 8  # 8 hours
+
+    initial_admin_username: str = "admin"
+    initial_admin_password: str = "admin"
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]

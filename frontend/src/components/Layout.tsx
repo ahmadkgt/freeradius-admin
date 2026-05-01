@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, Outlet } from "react-router-dom";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
@@ -12,8 +12,20 @@ import {
   Sun,
   Moon,
   Menu,
+  LogOut,
+  UserCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import ChangePasswordDialog from "@/components/ChangePasswordDialog";
+import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 
 const navItems = [
@@ -27,8 +39,11 @@ const navItems = [
 
 export default function Layout() {
   const { t, i18n } = useTranslation();
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
   const [collapsed, setCollapsed] = useState(false);
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
+  const [pwOpen, setPwOpen] = useState(false);
 
   const toggleLang = () => {
     void i18n.changeLanguage(i18n.language?.startsWith("ar") ? "en" : "ar");
@@ -38,6 +53,11 @@ export default function Layout() {
     const next = !dark;
     setDark(next);
     document.documentElement.classList.toggle("dark", next);
+  };
+
+  const onLogout = () => {
+    logout();
+    navigate("/login", { replace: true });
   };
 
   return (
@@ -110,6 +130,28 @@ export default function Layout() {
             <Button variant="ghost" size="icon" onClick={toggleTheme} title={t("common.theme")}>
               {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
             </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="gap-2">
+                  <UserCircle className="h-4 w-4" />
+                  <span className="hidden sm:inline max-w-[12rem] truncate">
+                    {user?.username ?? ""}
+                  </span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-52">
+                <DropdownMenuLabel className="truncate">{user?.username}</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onSelect={() => setPwOpen(true)}>
+                  <KeyRound className="h-4 w-4 me-2" />
+                  {t("auth.change_password")}
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={onLogout}>
+                  <LogOut className="h-4 w-4 me-2" />
+                  {t("auth.logout")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </header>
 
@@ -117,6 +159,8 @@ export default function Layout() {
           <Outlet />
         </main>
       </div>
+
+      <ChangePasswordDialog open={pwOpen} onOpenChange={setPwOpen} />
     </div>
   );
 }

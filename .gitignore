@@ -34,3 +34,6 @@ build/
 
 # Build
 *.tsbuildinfo
+
+# Session evidence (screenshots, etc) — never commit
+.session-evidence/

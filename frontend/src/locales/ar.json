@@ -141,5 +141,21 @@
     "filter_all": "الكل",
     "filter_accept": "مقبولة",
     "filter_reject": "مرفوضة"
+  },
+  "auth": {
+    "title": "تسجيل الدخول",
+    "subtitle": "إدارة FreeRADIUS",
+    "sign_in": "دخول",
+    "logout": "تسجيل الخروج",
+    "error_invalid": "اسم المستخدم أو كلمة المرور غير صحيحة",
+    "change_password": "تغيير كلمة المرور",
+    "change_password_desc": "اضبط كلمة مرور جديدة لحساب المسؤول.",
+    "change_password_success": "تم تحديث كلمة المرور بنجاح.",
+    "change_password_failed": "تعذّر تحديث كلمة المرور.",
+    "current_password": "كلمة المرور الحالية",
+    "new_password": "كلمة المرور الجديدة",
+    "confirm_password": "تأكيد كلمة المرور الجديدة",
+    "password_too_short": "يجب ألا تقل كلمة المرور الجديدة عن 8 أحرف.",
+    "passwords_dont_match": "كلمتا المرور الجديدتان غير متطابقتين."
   }
 }

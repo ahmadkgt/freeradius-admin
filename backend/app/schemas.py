@@ -162,6 +162,31 @@ class TopUser(BaseModel):
     total_bytes: int
 
 
+# ---- Auth ----
+class LoginRequest(BaseModel):
+    username: str = Field(min_length=1, max_length=64)
+    password: str = Field(min_length=1, max_length=255)
+
+
+class LoginResponse(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
+    expires_at: datetime
+    username: str
+
+
+class AdminMe(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    username: str
+    is_active: bool
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str = Field(min_length=1, max_length=255)
+    new_password: str = Field(min_length=8, max_length=255)
+
+
 # ---- Generic ----
 class Paginated[T](BaseModel):
     items: list[T]

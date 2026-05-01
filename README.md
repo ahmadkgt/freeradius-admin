@@ -100,7 +100,16 @@ freeradius-admin/
 └── docker-compose.yml
 ```
 
+## Authentication
+
+Panel admins are stored in the `admin_users` table (separate from the RADIUS user tables). The first time the backend boots against an empty `admin_users`, it seeds an admin from `INITIAL_ADMIN_USERNAME` / `INITIAL_ADMIN_PASSWORD` in the env. After signing in, admins can change their password from the user menu in the top bar.
+
+Every `/api/*` endpoint except `/api/auth/login` requires a valid JWT bearer token. Tokens are signed with `JWT_SECRET` (HS256) and live for `JWT_EXPIRE_MINUTES` (default 8 hours).
+
+## Production deployment
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for a complete VPS deployment guide (Ubuntu 22.04 / 24.04) with a one-shot bootstrap script (`deploy/setup-vps.sh`), reverse-proxy config, firewall rules, and Let's Encrypt instructions. Both English and Arabic instructions are included.
+
 ## Notes
 
-- The seed data uses `Cleartext-Password` for clarity — production deployments should use hashed passwords (e.g. `Crypt-Password`, `SHA2-Password`).
-- This UI is intentionally read/write — protect it with an auth proxy (oauth2-proxy, Traefik forward auth, etc.) before exposing it.
+- The seed data uses `Cleartext-Password` for clarity — production deployments should use hashed passwords (e.g. `Crypt-Password`, `SHA2-Password`) for the RADIUS user records.
