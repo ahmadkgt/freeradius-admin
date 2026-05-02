@@ -262,6 +262,7 @@ export default function UsersPage() {
               <TableHead>{t("common.username")}</TableHead>
               <TableHead>{t("common.status")}</TableHead>
               <TableHead>{t("users.fields.profile")}</TableHead>
+              <TableHead>{t("managers.fields.manager")}</TableHead>
               <TableHead>{t("users.fields.expiration")}</TableHead>
               <TableHead>{t("common.framed_ip")}</TableHead>
               <TableHead>{t("users.fields.full_name")}</TableHead>
@@ -271,13 +272,13 @@ export default function UsersPage() {
           <TableBody>
             {list.isLoading ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
                   {t("common.loading")}
                 </TableCell>
               </TableRow>
             ) : list.data?.items.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                <TableCell colSpan={8} className="text-center text-muted-foreground">
                   {t("common.no_data")}
                 </TableCell>
               </TableRow>
@@ -300,6 +301,13 @@ export default function UsersPage() {
                   <TableCell>
                     {u.profile_name ? (
                       <Badge variant="secondary">{u.profile_name}</Badge>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {u.manager_username ? (
+                      <Badge variant="outline">{u.manager_username}</Badge>
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}

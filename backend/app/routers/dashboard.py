@@ -6,46 +6,89 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..database import get_db
+from ..security import get_current_manager, visible_manager_ids
 
 router = APIRouter(prefix="/dashboard", tags=["dashboard"])
 
 
 @router.get("/stats", response_model=schemas.DashboardStats)
-def stats(db: Session = Depends(get_db)) -> schemas.DashboardStats:
+def stats(
+    db: Session = Depends(get_db),
+    current: models.Manager = Depends(get_current_manager),
+) -> schemas.DashboardStats:
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
-    total_users = db.execute(
-        select(func.count(distinct(models.RadCheck.username))).where(models.RadCheck.username != "")
-    ).scalar_one()
+    # If a sub-manager is logged in, restrict username-based stats to their subtree.
+    if current.is_root:
+        scoped_usernames: set[str] | None = None
+    else:
+        visible_ids = visible_manager_ids(db, current)
+        scoped_usernames = set(
+            db.execute(
+                select(models.SubscriberProfile.username).where(
+                    models.SubscriberProfile.manager_id.in_(visible_ids)
+                )
+            )
+            .scalars()
+            .all()
+        )
+
+    if scoped_usernames is None:
+        total_users = db.execute(
+            select(func.count(distinct(models.RadCheck.username))).where(
+                models.RadCheck.username != ""
+            )
+        ).scalar_one()
+    else:
+        total_users = len(scoped_usernames)
     total_groups = db.execute(
         select(func.count(distinct(models.RadGroupCheck.groupname))).where(
             models.RadGroupCheck.groupname != ""
         )
     ).scalar_one()
     total_nas = db.execute(select(func.count()).select_from(models.Nas)).scalar_one()
+
+    def _scope(stmt):
+        if scoped_usernames is None:
+            return stmt
+        if not scoped_usernames:
+            return stmt.where(models.RadAcct.username.in_(["__none__"]))
+        return stmt.where(models.RadAcct.username.in_(scoped_usernames))
+
+    def _scope_pa(stmt):
+        if scoped_usernames is None:
+            return stmt
+        if not scoped_usernames:
+            return stmt.where(models.RadPostAuth.username.in_(["__none__"]))
+        return stmt.where(models.RadPostAuth.username.in_(scoped_usernames))
+
     active_sessions = db.execute(
-        select(func.count()).where(models.RadAcct.acctstoptime.is_(None))
+        _scope(select(func.count()).where(models.RadAcct.acctstoptime.is_(None)))
     ).scalar_one()
     sessions_today = db.execute(
-        select(func.count()).where(models.RadAcct.acctstarttime >= today_start)
+        _scope(select(func.count()).where(models.RadAcct.acctstarttime >= today_start))
     ).scalar_one()
     auth_accepts_today = db.execute(
-        select(func.count()).where(
-            models.RadPostAuth.reply == "Access-Accept",
-            models.RadPostAuth.authdate >= today_start,
+        _scope_pa(
+            select(func.count()).where(
+                models.RadPostAuth.reply == "Access-Accept",
+                models.RadPostAuth.authdate >= today_start,
+            )
         )
     ).scalar_one()
     auth_rejects_today = db.execute(
-        select(func.count()).where(
-            models.RadPostAuth.reply == "Access-Reject",
-            models.RadPostAuth.authdate >= today_start,
+        _scope_pa(
+            select(func.count()).where(
+                models.RadPostAuth.reply == "Access-Reject",
+                models.RadPostAuth.authdate >= today_start,
+            )
         )
     ).scalar_one()
     total_input = db.execute(
-        select(func.coalesce(func.sum(models.RadAcct.acctinputoctets), 0))
+        _scope(select(func.coalesce(func.sum(models.RadAcct.acctinputoctets), 0)))
     ).scalar_one()
     total_output = db.execute(
-        select(func.coalesce(func.sum(models.RadAcct.acctoutputoctets), 0))
+        _scope(select(func.coalesce(func.sum(models.RadAcct.acctoutputoctets), 0)))
     ).scalar_one()
 
     # Lifecycle stats — derived from subscriber_profiles + radacct (open sessions).
@@ -53,23 +96,24 @@ def stats(db: Session = Depends(get_db)) -> schemas.DashboardStats:
     expiring_soon_threshold = now + timedelta(days=3)
     end_of_today = today_start + timedelta(days=1)
 
-    online_usernames = set(
-        u
-        for u in db.execute(
-            select(distinct(models.RadAcct.username)).where(
-                models.RadAcct.acctstoptime.is_(None),
-                models.RadAcct.username != "",
-            )
-        )
-        .scalars()
-        .all()
-        if u
+    online_q = select(distinct(models.RadAcct.username)).where(
+        models.RadAcct.acctstoptime.is_(None),
+        models.RadAcct.username != "",
     )
+    if scoped_usernames is not None:
+        if not scoped_usernames:
+            online_q = online_q.where(models.RadAcct.username.in_(["__none__"]))
+        else:
+            online_q = online_q.where(models.RadAcct.username.in_(scoped_usernames))
+    online_usernames = {u for u in db.execute(online_q).scalars().all() if u}
     online_users = len(online_usernames)
 
-    all_subs = list(
-        db.execute(select(models.SubscriberProfile)).scalars().all()
-    )
+    subs_q = select(models.SubscriberProfile)
+    if scoped_usernames is not None:
+        subs_q = subs_q.where(
+            models.SubscriberProfile.username.in_(scoped_usernames or {"__none__"})
+        )
+    all_subs = list(db.execute(subs_q).scalars().all())
 
     def _is_expired(s: models.SubscriberProfile) -> bool:
         return s.expiration_at is not None and s.expiration_at <= now
@@ -101,13 +145,16 @@ def stats(db: Session = Depends(get_db)) -> schemas.DashboardStats:
     )
 
     # All radcheck users — even those without a subscriber row are treated as enabled+no-expiry.
-    all_users = list(
-        db.execute(
-            select(distinct(models.RadCheck.username)).where(models.RadCheck.username != "")
+    if scoped_usernames is None:
+        all_users = list(
+            db.execute(
+                select(distinct(models.RadCheck.username)).where(models.RadCheck.username != "")
+            )
+            .scalars()
+            .all()
         )
-        .scalars()
-        .all()
-    )
+    else:
+        all_users = list(scoped_usernames)
     sub_by_user = {s.username: s for s in all_subs}
     active_users = 0
     active_online_users = 0

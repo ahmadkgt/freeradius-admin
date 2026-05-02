@@ -4,8 +4,22 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..database import get_db
+from ..security import get_current_manager, require_permission
 
 router = APIRouter(prefix="/profiles", tags=["profiles"])
+
+
+def _allowed_profile_ids_for(
+    current: models.Manager,
+) -> set[int] | None:
+    """Return the set of profile IDs the current manager is allowed to see, or None for all."""
+    if current.is_root:
+        return None
+    allowed = current.allowed_profile_ids or []
+    if not allowed:
+        # Empty whitelist means "all profiles available" for sub-managers (Phase 3 will tighten).
+        return None
+    return set(allowed)
 
 
 def _serialize(profile: models.Profile, user_count: int) -> schemas.ProfileOut:
@@ -33,13 +47,18 @@ def _user_count_map(db: Session, profile_ids: list[int]) -> dict[int, int]:
     return {pid: int(cnt) for pid, cnt in rows}
 
 
-@router.get("", response_model=schemas.Paginated[schemas.ProfileOut])
+@router.get(
+    "",
+    response_model=schemas.Paginated[schemas.ProfileOut],
+    dependencies=[Depends(require_permission("profiles.view"))],
+)
 def list_profiles(
     q: str | None = None,
     enabled_only: bool = False,
     page: int = Query(1, ge=1),
     page_size: int = Query(50, ge=1, le=200),
     db: Session = Depends(get_db),
+    current: models.Manager = Depends(get_current_manager),
 ) -> schemas.Paginated[schemas.ProfileOut]:
     base_q = select(models.Profile)
     if q:
@@ -47,6 +66,13 @@ def list_profiles(
         base_q = base_q.where(models.Profile.name.like(like))
     if enabled_only:
         base_q = base_q.where(models.Profile.enabled.is_(True))
+    allowed = _allowed_profile_ids_for(current)
+    if allowed is not None:
+        if not allowed:
+            return schemas.Paginated[schemas.ProfileOut](
+                items=[], total=0, page=page, page_size=page_size
+            )
+        base_q = base_q.where(models.Profile.id.in_(allowed))
 
     total = db.execute(select(func.count()).select_from(base_q.subquery())).scalar_one()
     profiles = list(
@@ -63,16 +89,32 @@ def list_profiles(
     )
 
 
-@router.get("/{profile_id}", response_model=schemas.ProfileOut)
-def get_profile(profile_id: int, db: Session = Depends(get_db)) -> schemas.ProfileOut:
+@router.get(
+    "/{profile_id}",
+    response_model=schemas.ProfileOut,
+    dependencies=[Depends(require_permission("profiles.view"))],
+)
+def get_profile(
+    profile_id: int,
+    db: Session = Depends(get_db),
+    current: models.Manager = Depends(get_current_manager),
+) -> schemas.ProfileOut:
     profile = db.get(models.Profile, profile_id)
     if profile is None:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    allowed = _allowed_profile_ids_for(current)
+    if allowed is not None and profile.id not in allowed:
         raise HTTPException(status_code=404, detail="Profile not found")
     counts = _user_count_map(db, [profile.id])
     return _serialize(profile, counts.get(profile.id, 0))
 
 
-@router.post("", response_model=schemas.ProfileOut, status_code=201)
+@router.post(
+    "",
+    response_model=schemas.ProfileOut,
+    status_code=201,
+    dependencies=[Depends(require_permission("profiles.manage"))],
+)
 def create_profile(
     payload: schemas.ProfileCreate, db: Session = Depends(get_db)
 ) -> schemas.ProfileOut:
@@ -88,7 +130,11 @@ def create_profile(
     return _serialize(profile, 0)
 
 
-@router.patch("/{profile_id}", response_model=schemas.ProfileOut)
+@router.patch(
+    "/{profile_id}",
+    response_model=schemas.ProfileOut,
+    dependencies=[Depends(require_permission("profiles.manage"))],
+)
 def update_profile(
     profile_id: int,
     payload: schemas.ProfileUpdate,
@@ -115,7 +161,11 @@ def update_profile(
     return _serialize(profile, counts.get(profile.id, 0))
 
 
-@router.delete("/{profile_id}", status_code=204)
+@router.delete(
+    "/{profile_id}",
+    status_code=204,
+    dependencies=[Depends(require_permission("profiles.manage"))],
+)
 def delete_profile(profile_id: int, db: Session = Depends(get_db)) -> None:
     profile = db.get(models.Profile, profile_id)
     if profile is None:

@@ -2,6 +2,7 @@ from datetime import datetime, time
 from decimal import Decimal
 
 from sqlalchemy import (
+    JSON,
     BigInteger,
     Boolean,
     DateTime,
@@ -129,17 +130,49 @@ class Nas(Base):
     description: Mapped[str | None] = mapped_column(String(200), default="RADIUS Client")
 
 
-class AdminUser(Base):
-    """Panel administrator. Separate from RADIUS users — these are operators who log into the UI."""
+class Manager(Base):
+    """Panel operator. Hierarchy of managers/resellers — each one logs into the UI.
 
-    __tablename__ = "admin_users"
+    Replaces the legacy `admin_users` table. The root manager has `is_root=True`
+    and implicitly carries every permission. Sub-managers carry an explicit
+    `permissions` list (see `app.permissions.PERMISSIONS`).
+    """
+
+    __tablename__ = "managers"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    parent_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("managers.id", ondelete="RESTRICT"),
+        nullable=True,
+        index=True,
+    )
     username: Mapped[str] = mapped_column(String(64), unique=True, index=True)
     password_hash: Mapped[str] = mapped_column(String(255))
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
+    full_name: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    address: Mapped[str | None] = mapped_column(Text, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
+    is_root: Mapped[bool] = mapped_column(Boolean, default=False, server_default="0")
+    balance: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), default=Decimal("0"), server_default="0"
+    )
+    profit_share_percent: Mapped[Decimal] = mapped_column(
+        Numeric(5, 2), default=Decimal("0"), server_default="0"
+    )
+    max_users_quota: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    permissions: Mapped[list[str]] = mapped_column(JSON, default=list)
+    allowed_profile_ids: Mapped[list[int]] = mapped_column(JSON, default=list)
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.current_timestamp(), default=func.current_timestamp()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.current_timestamp(),
+        default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
     )
 
 
@@ -194,6 +227,11 @@ class Profile(Base):
     enable_sub_managers: Mapped[bool] = mapped_column(
         Boolean, default=False, server_default="0"
     )
+    owner_manager_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("managers.id", ondelete="SET NULL"),
+        nullable=True,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.current_timestamp(), default=func.current_timestamp()
     )
@@ -214,7 +252,12 @@ class SubscriberProfile(Base):
     profile_id: Mapped[int | None] = mapped_column(
         Integer, ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True
     )
-    parent_manager_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    manager_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("managers.id", ondelete="SET NULL"),
+        nullable=True,
+        index=True,
+    )
     enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
     expiration_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     balance: Mapped[Decimal] = mapped_column(
