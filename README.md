@@ -110,6 +110,10 @@ Every `/api/*` endpoint except `/api/auth/login` requires a valid JWT bearer tok
 
 See [DEPLOYMENT.md](DEPLOYMENT.md) for a complete VPS deployment guide (Ubuntu 22.04 / 24.04) with a one-shot bootstrap script (`deploy/setup-vps.sh`), reverse-proxy config, firewall rules, and Let's Encrypt instructions. Both English and Arabic instructions are included.
 
+## Running FreeRADIUS against the panel's database
+
+See [FREERADIUS.md](FREERADIUS.md) for installing FreeRADIUS 3.x on the same VPS and wiring it into the panel's MySQL — the script reads the same `.env` and turns the panel into a real two-way RADIUS admin (live `radpostauth` and `radacct` show up on the Auth log / Accounting pages, NAS clients added in the UI are picked up via `read_clients = yes`).
+
 ## Notes
 
 - The seed data uses `Cleartext-Password` for clarity — production deployments should use hashed passwords (e.g. `Crypt-Password`, `SHA2-Password`) for the RADIUS user records.
