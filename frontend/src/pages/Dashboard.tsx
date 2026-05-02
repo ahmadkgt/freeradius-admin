@@ -130,16 +130,12 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
         <StatCard
           label={t("user_status.active_online")}
-          value={stats.data?.online_users ?? "—"}
+          value={stats.data?.active_online_users ?? "—"}
           Icon={Wifi}
         />
         <StatCard
           label={t("user_status.active_offline")}
-          value={
-            stats.data
-              ? Math.max(0, stats.data.active_users - stats.data.online_users)
-              : "—"
-          }
+          value={stats.data?.active_offline_users ?? "—"}
           Icon={WifiOff}
         />
         <StatCard
