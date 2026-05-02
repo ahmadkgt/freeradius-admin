@@ -110,13 +110,16 @@ def stats(db: Session = Depends(get_db)) -> schemas.DashboardStats:
     )
     sub_by_user = {s.username: s for s in all_subs}
     active_users = 0
+    active_online_users = 0
     for u in all_users:
         s = sub_by_user.get(u)
-        if s is None:
-            active_users += 1  # no subscription row → treat as active
-        elif s.enabled and not _is_expired(s):
+        is_active = s is None or (s.enabled and not _is_expired(s))
+        if is_active:
             active_users += 1
+            if u in online_usernames:
+                active_online_users += 1
 
+    active_offline_users = max(0, active_users - active_online_users)
     offline_users = max(0, len(all_users) - online_users)
 
     return schemas.DashboardStats(
@@ -130,6 +133,8 @@ def stats(db: Session = Depends(get_db)) -> schemas.DashboardStats:
         total_input_bytes=int(total_input or 0),
         total_output_bytes=int(total_output or 0),
         active_users=active_users,
+        active_online_users=active_online_users,
+        active_offline_users=active_offline_users,
         online_users=online_users,
         offline_users=offline_users,
         expired_users=expired_users,

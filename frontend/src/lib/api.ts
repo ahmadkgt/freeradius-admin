@@ -160,6 +160,8 @@ export interface DashboardStats {
   total_input_bytes: number;
   total_output_bytes: number;
   active_users: number;
+  active_online_users: number;
+  active_offline_users: number;
   online_users: number;
   offline_users: number;
   expired_users: number;

@@ -14,7 +14,7 @@ router = APIRouter(prefix="/system", tags=["system"])
 def _read_first_line(path: Path) -> str | None:
     try:
         return path.read_text().splitlines()[0]
-    except OSError:
+    except (OSError, IndexError):
         return None
 
 

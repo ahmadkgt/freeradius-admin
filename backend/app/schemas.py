@@ -104,6 +104,8 @@ class UserCreate(BaseModel):
     profile_id: int | None = None
     enabled: bool = True
     expiration_at: datetime | None = None
+    balance: Decimal | None = None
+    debt: Decimal | None = None
     first_name: str | None = None
     last_name: str | None = None
     email: str | None = None
@@ -120,6 +122,8 @@ class UserUpdate(BaseModel):
     profile_id: int | None = None
     enabled: bool | None = None
     expiration_at: datetime | None = None
+    balance: Decimal | None = None
+    debt: Decimal | None = None
     first_name: str | None = None
     last_name: str | None = None
     email: str | None = None
@@ -301,6 +305,8 @@ class DashboardStats(BaseModel):
     total_output_bytes: int
     # Phase 1 — user lifecycle stats
     active_users: int = 0
+    active_online_users: int = 0
+    active_offline_users: int = 0
     online_users: int = 0
     offline_users: int = 0
     expired_users: int = 0
