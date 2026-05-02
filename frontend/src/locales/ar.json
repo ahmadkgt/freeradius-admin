@@ -12,7 +12,8 @@
     "nas": "أجهزة NAS / العملاء",
     "accounting": "السجلات والجلسات",
     "auth_log": "سجل المصادقة",
-    "system": "معلومات النظام"
+    "system": "معلومات النظام",
+    "managers": "المدراء"
   },
   "common": {
     "search": "بحث",
@@ -234,6 +235,54 @@
     "filter_all": "الكل",
     "filter_accept": "مقبولة",
     "filter_reject": "مرفوضة"
+  },
+  "managers": {
+    "title": "المدراء / الموزّعون",
+    "create": "إنشاء مدير",
+    "edit": "تعديل المدير",
+    "delete_confirm": "حذف المدير '{{username}}'؟ يجب ألّا يكون لديه أو لمدرائه الفرعيين مشتركون.",
+    "search_placeholder": "ابحث باسم المستخدم أو الاسم الكامل…",
+    "tab_list": "قائمة",
+    "tab_tree": "شجرة",
+    "root": "الرئيسي",
+    "no_managers": "لا يوجد مدراء",
+    "users": "المشتركون",
+    "subs": "المدراء الفرعيون",
+    "fields": {
+      "username": "اسم المستخدم",
+      "password": "كلمة السر",
+      "password_change": "كلمة سر جديدة (اتركها فارغة للإبقاء)",
+      "full_name": "الاسم الكامل",
+      "phone": "الهاتف",
+      "email": "البريد",
+      "address": "العنوان",
+      "notes": "ملاحظات",
+      "enabled": "مفعّل",
+      "is_root": "مدير رئيسي",
+      "balance": "الرصيد",
+      "profit_share_percent": "نسبة الربح %",
+      "max_users_quota": "أقصى عدد مشتركين",
+      "permissions": "الصلاحيات",
+      "allowed_profiles": "الباقات المسموحة",
+      "parent": "المدير الأب",
+      "manager": "المدير"
+    },
+    "permissions": {
+      "users.view": "عرض المشتركين",
+      "users.create": "إنشاء مشتركين",
+      "users.edit": "تعديل المشتركين",
+      "users.delete": "حذف المشتركين",
+      "users.renew": "تجديد الاشتراكات",
+      "users.toggle": "تفعيل / تعطيل المشتركين",
+      "profiles.view": "عرض الباقات",
+      "profiles.manage": "إدارة الباقات",
+      "managers.view": "عرض المدراء",
+      "managers.manage": "إدارة المدراء",
+      "invoices.view": "عرض الفواتير",
+      "invoices.manage": "إدارة الفواتير",
+      "reports.view": "عرض التقارير",
+      "settings.manage": "إدارة الإعدادات"
+    }
   },
   "auth": {
     "title": "تسجيل الدخول",

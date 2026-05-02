@@ -49,6 +49,8 @@ export interface UserSummary {
   framed_ip?: string | null;
   status: UserStatus;
   profile_name?: string | null;
+  manager_id?: number | null;
+  manager_username?: string | null;
   expiration_at?: string | null;
   online: boolean;
   first_name?: string | null;
@@ -60,6 +62,8 @@ export interface UserSummary {
 export interface SubscriptionInfo {
   profile_id?: number | null;
   profile_name?: string | null;
+  manager_id?: number | null;
+  manager_username?: string | null;
   enabled: boolean;
   expiration_at?: string | null;
   balance: string;
@@ -228,4 +232,123 @@ export interface TopUser {
   username: string;
   sessions: number;
   total_bytes: number;
+}
+
+export type Permission =
+  | "users.view"
+  | "users.create"
+  | "users.edit"
+  | "users.delete"
+  | "users.renew"
+  | "users.toggle"
+  | "profiles.view"
+  | "profiles.manage"
+  | "managers.view"
+  | "managers.manage"
+  | "invoices.view"
+  | "invoices.manage"
+  | "reports.view"
+  | "settings.manage";
+
+export const ALL_PERMISSIONS: Permission[] = [
+  "users.view",
+  "users.create",
+  "users.edit",
+  "users.delete",
+  "users.renew",
+  "users.toggle",
+  "profiles.view",
+  "profiles.manage",
+  "managers.view",
+  "managers.manage",
+  "invoices.view",
+  "invoices.manage",
+  "reports.view",
+  "settings.manage",
+];
+
+export interface AdminMe {
+  id: number;
+  username: string;
+  full_name?: string | null;
+  enabled: boolean;
+  is_root: boolean;
+  parent_id?: number | null;
+  balance: string;
+  permissions: string[];
+  effective_permissions: string[];
+}
+
+export interface Manager {
+  id: number;
+  parent_id?: number | null;
+  username: string;
+  full_name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  notes?: string | null;
+  enabled: boolean;
+  is_root: boolean;
+  balance: string;
+  profit_share_percent: string;
+  max_users_quota?: number | null;
+  permissions: string[];
+  allowed_profile_ids: number[];
+  created_at: string;
+  updated_at: string;
+  sub_count: number;
+  user_count: number;
+}
+
+export interface ManagerTreeNode {
+  id: number;
+  username: string;
+  full_name?: string | null;
+  enabled: boolean;
+  is_root: boolean;
+  user_count: number;
+  children: ManagerTreeNode[];
+}
+
+export interface ManagerCreatePayload {
+  parent_id?: number | null;
+  username: string;
+  password: string;
+  full_name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  notes?: string | null;
+  enabled?: boolean;
+  balance?: string;
+  profit_share_percent?: string;
+  max_users_quota?: number | null;
+  permissions?: string[];
+  allowed_profile_ids?: number[];
+}
+
+export interface ManagerUpdatePayload {
+  username?: string;
+  password?: string | null;
+  full_name?: string | null;
+  phone?: string | null;
+  email?: string | null;
+  address?: string | null;
+  notes?: string | null;
+  enabled?: boolean;
+  balance?: string;
+  profit_share_percent?: string;
+  max_users_quota?: number | null;
+  permissions?: string[];
+  allowed_profile_ids?: number[];
+}
+
+export function hasPermission(
+  effectivePermissions: string[] | undefined,
+  perm: Permission,
+): boolean {
+  if (!effectivePermissions) return false;
+  if (effectivePermissions.includes("*")) return true;
+  return effectivePermissions.includes(perm);
 }

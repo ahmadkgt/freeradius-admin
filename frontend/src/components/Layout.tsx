@@ -18,6 +18,7 @@ import {
   Wifi,
   Package,
   Cpu,
+  Network,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,12 +32,22 @@ import {
 import ChangePasswordDialog from "@/components/ChangePasswordDialog";
 import { useAuth } from "@/lib/auth";
 import { cn } from "@/lib/utils";
+import type { Permission } from "@/lib/api";
 
-const navItems = [
+interface NavItem {
+  to: string;
+  labelKey: string;
+  Icon: typeof LayoutDashboard;
+  end?: boolean;
+  perm?: Permission;
+}
+
+const navItems: NavItem[] = [
   { to: "/", labelKey: "nav.dashboard", Icon: LayoutDashboard, end: true },
-  { to: "/users", labelKey: "nav.users", Icon: UsersIcon },
-  { to: "/online-users", labelKey: "nav.online_users", Icon: Wifi },
-  { to: "/profiles", labelKey: "nav.profiles", Icon: Package },
+  { to: "/users", labelKey: "nav.users", Icon: UsersIcon, perm: "users.view" },
+  { to: "/online-users", labelKey: "nav.online_users", Icon: Wifi, perm: "users.view" },
+  { to: "/profiles", labelKey: "nav.profiles", Icon: Package, perm: "profiles.view" },
+  { to: "/managers", labelKey: "nav.managers", Icon: Network, perm: "managers.view" },
   { to: "/groups", labelKey: "nav.groups", Icon: UsersRound },
   { to: "/nas", labelKey: "nav.nas", Icon: Server },
   { to: "/accounting", labelKey: "nav.accounting", Icon: Activity },
@@ -46,7 +57,8 @@ const navItems = [
 
 export default function Layout() {
   const { t, i18n } = useTranslation();
-  const { user, logout } = useAuth();
+  const { user, logout, hasPermission } = useAuth();
+  const visibleNav = navItems.filter((item) => !item.perm || hasPermission(item.perm));
   const navigate = useNavigate();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
@@ -124,7 +136,7 @@ export default function Layout() {
           )}
         </div>
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          {navItems.map(({ to, labelKey, Icon, end }) => (
+          {visibleNav.map(({ to, labelKey, Icon, end }) => (
             <NavLink
               key={to}
               to={to}

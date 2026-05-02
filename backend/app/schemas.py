@@ -52,6 +52,8 @@ class SubscriptionInfo(BaseModel):
     model_config = ConfigDict(from_attributes=True)
     profile_id: int | None = None
     profile_name: str | None = None
+    manager_id: int | None = None
+    manager_username: str | None = None
     enabled: bool = True
     expiration_at: datetime | None = None
     balance: Decimal = Decimal("0")
@@ -68,6 +70,7 @@ class SubscriptionUpdate(BaseModel):
     """Mutable fields on a subscriber's metadata."""
 
     profile_id: int | None = None
+    manager_id: int | None = None
     enabled: bool | None = None
     expiration_at: datetime | None = None
     balance: Decimal | None = None
@@ -87,6 +90,8 @@ class UserSummary(BaseModel):
     framed_ip: str | None = None
     status: UserStatus = "active_offline"
     profile_name: str | None = None
+    manager_id: int | None = None
+    manager_username: str | None = None
     expiration_at: datetime | None = None
     online: bool = False
     first_name: str | None = None
@@ -102,6 +107,7 @@ class UserCreate(BaseModel):
     framed_ip: str | None = None
     # Optional subscription fields — may be supplied at create time.
     profile_id: int | None = None
+    manager_id: int | None = None
     enabled: bool = True
     expiration_at: datetime | None = None
     balance: Decimal | None = None
@@ -120,6 +126,7 @@ class UserUpdate(BaseModel):
     framed_ip: str | None = None
     # Subscription fields — when present, will be patched onto the subscriber row.
     profile_id: int | None = None
+    manager_id: int | None = None
     enabled: bool | None = None
     expiration_at: datetime | None = None
     balance: Decimal | None = None
@@ -362,15 +369,95 @@ class LoginResponse(BaseModel):
 
 
 class AdminMe(BaseModel):
+    """Identity payload for the currently-logged-in manager."""
+
     model_config = ConfigDict(from_attributes=True)
     id: int
     username: str
-    is_active: bool
+    full_name: str | None = None
+    is_root: bool = False
+    enabled: bool = True
+    parent_id: int | None = None
+    permissions: list[str] = []
+    effective_permissions: list[str] = []  # expanded (root → all known perms)
+    balance: Decimal = Decimal("0")
 
 
 class ChangePasswordRequest(BaseModel):
     current_password: str = Field(min_length=1, max_length=255)
     new_password: str = Field(min_length=8, max_length=255)
+
+
+# ---- Managers (Phase 2) ----
+class ManagerBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    parent_id: int | None = None
+    username: str
+    full_name: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None
+    notes: str | None = None
+    enabled: bool = True
+    is_root: bool = False
+    balance: Decimal = Decimal("0")
+    profit_share_percent: Decimal = Decimal("0")
+    max_users_quota: int | None = None
+    permissions: list[str] = []
+    allowed_profile_ids: list[int] = []
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+
+class ManagerOut(ManagerBase):
+    sub_count: int = 0  # number of direct sub-managers
+    user_count: int = 0  # number of subscribers owned by this manager
+
+
+class ManagerCreate(BaseModel):
+    parent_id: int | None = None
+    username: str = Field(min_length=1, max_length=64)
+    password: str = Field(min_length=8, max_length=255)
+    full_name: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None
+    notes: str | None = None
+    enabled: bool = True
+    balance: Decimal = Decimal("0")
+    profit_share_percent: Decimal = Decimal("0")
+    max_users_quota: int | None = None
+    permissions: list[str] = []
+    allowed_profile_ids: list[int] = []
+
+
+class ManagerUpdate(BaseModel):
+    password: str | None = Field(default=None, min_length=8, max_length=255)
+    full_name: str | None = None
+    phone: str | None = None
+    email: str | None = None
+    address: str | None = None
+    notes: str | None = None
+    enabled: bool | None = None
+    balance: Decimal | None = None
+    profit_share_percent: Decimal | None = None
+    max_users_quota: int | None = None
+    permissions: list[str] | None = None
+    allowed_profile_ids: list[int] | None = None
+
+
+class ManagerTreeNode(BaseModel):
+    """One node in the manager-hierarchy tree."""
+
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    username: str
+    full_name: str | None = None
+    enabled: bool = True
+    is_root: bool = False
+    user_count: int = 0
+    children: list["ManagerTreeNode"] = []
 
 
 # ---- Generic ----

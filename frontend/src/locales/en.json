@@ -12,7 +12,8 @@
     "nas": "NAS / Clients",
     "accounting": "Accounting",
     "auth_log": "Auth log",
-    "system": "System info"
+    "system": "System info",
+    "managers": "Managers"
   },
   "common": {
     "search": "Search",
@@ -234,6 +235,54 @@
     "filter_all": "All",
     "filter_accept": "Accepted",
     "filter_reject": "Rejected"
+  },
+  "managers": {
+    "title": "Managers / Resellers",
+    "create": "Create manager",
+    "edit": "Edit manager",
+    "delete_confirm": "Delete manager '{{username}}'? Their sub-tree must have no subscribers.",
+    "search_placeholder": "Search by username or full name…",
+    "tab_list": "List",
+    "tab_tree": "Tree",
+    "root": "Root",
+    "no_managers": "No managers found",
+    "users": "Users",
+    "subs": "Sub-managers",
+    "fields": {
+      "username": "Username",
+      "password": "Password",
+      "password_change": "New password (leave blank to keep)",
+      "full_name": "Full name",
+      "phone": "Phone",
+      "email": "Email",
+      "address": "Address",
+      "notes": "Notes",
+      "enabled": "Enabled",
+      "is_root": "Root admin",
+      "balance": "Balance",
+      "profit_share_percent": "Profit share %",
+      "max_users_quota": "Max users quota",
+      "permissions": "Permissions",
+      "allowed_profiles": "Allowed profiles",
+      "parent": "Parent",
+      "manager": "Manager"
+    },
+    "permissions": {
+      "users.view": "View users",
+      "users.create": "Create users",
+      "users.edit": "Edit users",
+      "users.delete": "Delete users",
+      "users.renew": "Renew subscriptions",
+      "users.toggle": "Enable / disable users",
+      "profiles.view": "View profiles",
+      "profiles.manage": "Manage profiles",
+      "managers.view": "View managers",
+      "managers.manage": "Manage managers",
+      "invoices.view": "View invoices",
+      "invoices.manage": "Manage invoices",
+      "reports.view": "View reports",
+      "settings.manage": "Manage settings"
+    }
   },
   "auth": {
     "title": "Sign in",

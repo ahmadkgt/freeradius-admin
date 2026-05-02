@@ -11,6 +11,7 @@ import LoginPage from "@/pages/Login";
 import ProfilesPage from "@/pages/Profiles";
 import OnlineUsersPage from "@/pages/OnlineUsers";
 import SystemInfoPage from "@/pages/SystemInfo";
+import ManagersPage from "@/pages/Managers";
 
 export default function App() {
   return (
@@ -22,6 +23,7 @@ export default function App() {
           <Route path="users" element={<UsersPage />} />
           <Route path="online-users" element={<OnlineUsersPage />} />
           <Route path="profiles" element={<ProfilesPage />} />
+          <Route path="managers" element={<ManagersPage />} />
           <Route path="groups" element={<GroupsPage />} />
           <Route path="nas" element={<NasPage />} />
           <Route path="accounting" element={<AccountingPage />} />

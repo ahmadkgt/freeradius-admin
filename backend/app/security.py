@@ -1,5 +1,12 @@
-"""Password hashing and JWT token utilities for panel admin auth."""
+"""Password hashing and JWT token utilities for panel auth.
 
+In Phase 2 we authenticate against the `managers` table (the legacy
+`admin_users` table was removed). The currently-authenticated subject
+is exposed via the `get_current_manager` dependency. Routers that need
+permission gating use `require_permission(...)`.
+"""
+
+from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
 
 import bcrypt
@@ -9,7 +16,7 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from . import models
+from . import models, permissions
 from .config import settings
 from .database import get_db
 
@@ -64,10 +71,11 @@ def decode_access_token(token: str) -> str:
     return sub
 
 
-def get_current_admin(
+def get_current_manager(
     token: str | None = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
-) -> models.AdminUser:
+) -> models.Manager:
+    """Resolve the JWT into a `Manager` row, or 401."""
     if not token:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -75,13 +83,68 @@ def get_current_admin(
             headers={"WWW-Authenticate": "Bearer"},
         )
     username = decode_access_token(token)
-    user = db.execute(
-        select(models.AdminUser).where(models.AdminUser.username == username).limit(1)
+    manager = db.execute(
+        select(models.Manager).where(models.Manager.username == username).limit(1)
     ).scalar_one_or_none()
-    if user is None or not user.is_active:
+    if manager is None or not manager.enabled:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User not found or inactive",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    return user
+    return manager
+
+
+# Backwards-compat alias for routers that historically used `get_current_admin`.
+get_current_admin = get_current_manager
+
+
+def require_permission(*required: str):
+    """Dependency factory that 403s if the current manager lacks any of `required`."""
+
+    needed: tuple[str, ...] = required
+
+    def _checker(
+        current: models.Manager = Depends(get_current_manager),
+    ) -> models.Manager:
+        for perm in needed:
+            if not permissions.has_permission(
+                current.permissions or [], current.is_root, perm
+            ):
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail=f"Missing permission: {perm}",
+                )
+        return current
+
+    return _checker
+
+
+def manager_subtree_ids(db: Session, root_id: int) -> set[int]:
+    """Return the set of manager IDs that are `root_id` plus all its descendants."""
+    ids: set[int] = {root_id}
+    frontier: set[int] = {root_id}
+    while frontier:
+        rows: Iterable[int] = (
+            db.execute(
+                select(models.Manager.id).where(models.Manager.parent_id.in_(frontier))
+            )
+            .scalars()
+            .all()
+        )
+        new = {r for r in rows if r not in ids}
+        if not new:
+            break
+        ids.update(new)
+        frontier = new
+    return ids
+
+
+def visible_manager_ids(db: Session, current: models.Manager) -> set[int]:
+    """Manager IDs the current user can see (their own subtree).
+
+    Root admins see everyone (returns the set of all manager IDs).
+    """
+    if current.is_root:
+        return set(db.execute(select(models.Manager.id)).scalars().all())
+    return manager_subtree_ids(db, current.id)
