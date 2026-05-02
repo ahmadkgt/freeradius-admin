@@ -8,6 +8,9 @@ import NasPage from "@/pages/Nas";
 import AccountingPage from "@/pages/Accounting";
 import AuthLogPage from "@/pages/AuthLog";
 import LoginPage from "@/pages/Login";
+import ProfilesPage from "@/pages/Profiles";
+import OnlineUsersPage from "@/pages/OnlineUsers";
+import SystemInfoPage from "@/pages/SystemInfo";
 
 export default function App() {
   return (
@@ -17,10 +20,13 @@ export default function App() {
         <Route element={<Layout />}>
           <Route index element={<Dashboard />} />
           <Route path="users" element={<UsersPage />} />
+          <Route path="online-users" element={<OnlineUsersPage />} />
+          <Route path="profiles" element={<ProfilesPage />} />
           <Route path="groups" element={<GroupsPage />} />
           <Route path="nas" element={<NasPage />} />
           <Route path="accounting" element={<AccountingPage />} />
           <Route path="auth-log" element={<AuthLogPage />} />
+          <Route path="system" element={<SystemInfoPage />} />
         </Route>
       </Route>
     </Routes>

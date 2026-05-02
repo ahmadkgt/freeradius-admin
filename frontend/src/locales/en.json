@@ -6,10 +6,13 @@
   "nav": {
     "dashboard": "Dashboard",
     "users": "Users",
+    "online_users": "Online users",
+    "profiles": "Profiles",
     "groups": "Groups",
     "nas": "NAS / Clients",
     "accounting": "Accounting",
-    "auth_log": "Auth log"
+    "auth_log": "Auth log",
+    "system": "System info"
   },
   "common": {
     "search": "Search",
@@ -51,10 +54,23 @@
     "username": "Username",
     "password": "Password",
     "groups": "Groups",
-    "framed_ip": "Framed IP"
+    "framed_ip": "Framed IP",
+    "status": "Status",
+    "enabled": "Enabled",
+    "disabled": "Disabled",
+    "currency": "SYP"
+  },
+  "user_status": {
+    "active_online": "Active (online)",
+    "active_offline": "Active (offline)",
+    "expiring_soon": "Expiring soon",
+    "expired": "Expired",
+    "expired_online": "Expired (online)",
+    "disabled": "Disabled"
   },
   "dashboard": {
     "title": "Overview",
+    "lifecycle": "Subscriber lifecycle",
     "stats": {
       "total_users": "Total users",
       "total_groups": "Total groups",
@@ -63,7 +79,8 @@
       "sessions_today": "Sessions today",
       "auth_accepts_today": "Accepts today",
       "auth_rejects_today": "Rejects today",
-      "total_traffic": "Total traffic"
+      "total_traffic": "Total traffic",
+      "expiring_today": "Today"
     },
     "auth_chart": "Authentication activity (last 7 days)",
     "chart": {
@@ -79,13 +96,88 @@
     "create": "Create user",
     "edit": "Edit user",
     "delete_confirm": "Delete user '{{username}}'? This removes all RADIUS attributes and group bindings.",
-    "search_placeholder": "Search by username…",
+    "search_placeholder": "Search by username or contact info…",
     "groups_placeholder": "Comma-separated group names",
+    "all_statuses": "All statuses",
     "fields": {
       "check_attrs": "Check attributes",
       "reply_attrs": "Reply attributes",
-      "no_attrs": "No attributes"
+      "no_attrs": "No attributes",
+      "subscription": "Subscription",
+      "contact": "Contact info",
+      "profile": "Profile",
+      "no_profile": "— None —",
+      "expiration": "Expiration",
+      "balance": "Balance",
+      "debt": "Debt",
+      "first_name": "First name",
+      "last_name": "Last name",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "notes": "Notes",
+      "enabled": "Enabled",
+      "full_name": "Full name"
     }
+  },
+  "online_users": {
+    "title": "Online users",
+    "connected": "connected",
+    "auto_refresh": "Auto-refresh every 5s",
+    "empty": "No active sessions",
+    "fields": {
+      "profile": "Profile",
+      "framed_ip": "Framed IP",
+      "nas_ip": "NAS",
+      "calling_station": "Calling station",
+      "duration": "Duration",
+      "input": "In",
+      "output": "Out"
+    }
+  },
+  "profiles": {
+    "title": "Service profiles",
+    "create": "Create profile",
+    "edit": "Edit profile",
+    "delete_confirm": "Delete profile '{{name}}'?",
+    "delete_failed": "Cannot delete profile.",
+    "search_placeholder": "Search by name…",
+    "type": {
+      "prepaid": "Prepaid",
+      "postpaid": "Postpaid",
+      "expired": "Expired"
+    },
+    "duration_unit": {
+      "days": "days",
+      "months": "months",
+      "years": "years"
+    },
+    "fields": {
+      "price": "Price",
+      "vat_percent": "VAT %",
+      "duration": "Duration",
+      "duration_value": "Duration",
+      "duration_unit": "Unit",
+      "speed": "Speed (D/U)",
+      "download_kbps": "Download (kbps)",
+      "upload_kbps": "Upload (kbps)",
+      "pool_name": "IP pool",
+      "short_description": "Short description",
+      "users": "Users"
+    }
+  },
+  "system_info": {
+    "title": "System information",
+    "version": "Version",
+    "uptime": "Uptime",
+    "load_avg": "Load average",
+    "memory": "Memory",
+    "disk": "Disk",
+    "cpu": "CPU",
+    "db_size": "Database size",
+    "connections": "DB connections",
+    "users": "Users",
+    "profiles": "Profiles"
   },
   "groups": {
     "title": "Groups",

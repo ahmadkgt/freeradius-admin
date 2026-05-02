@@ -15,6 +15,9 @@ import {
   X,
   LogOut,
   UserCircle,
+  Wifi,
+  Package,
+  Cpu,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -32,10 +35,13 @@ import { cn } from "@/lib/utils";
 const navItems = [
   { to: "/", labelKey: "nav.dashboard", Icon: LayoutDashboard, end: true },
   { to: "/users", labelKey: "nav.users", Icon: UsersIcon },
+  { to: "/online-users", labelKey: "nav.online_users", Icon: Wifi },
+  { to: "/profiles", labelKey: "nav.profiles", Icon: Package },
   { to: "/groups", labelKey: "nav.groups", Icon: UsersRound },
   { to: "/nas", labelKey: "nav.nas", Icon: Server },
   { to: "/accounting", labelKey: "nav.accounting", Icon: Activity },
   { to: "/auth-log", labelKey: "nav.auth_log", Icon: KeyRound },
+  { to: "/system", labelKey: "nav.system", Icon: Cpu },
 ];
 
 export default function Layout() {
