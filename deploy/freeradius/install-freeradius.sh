@@ -125,14 +125,21 @@ for key, val in repls:
     )
     if pat.search(text) is None:
         raise SystemExit(f"Could not find connection key '{key}' in sql config")
-    text, n = pat.subn(rf'\g<1>{key} = {val}', text, count=1)
+    # Use a lambda replacement so re.sub doesn't reinterpret backslashes
+    # in `val` (e.g. when MYSQL_PASSWORD legitimately contains '\').
+    text, n = pat.subn(
+        lambda m, _k=key, _v=val: f'{m.group(1)}{_k} = {_v}',
+        text,
+        count=1,
+    )
     if n != 1:
         raise SystemExit(f"Failed to set '{key}' (matched {n} times)")
 
-# 4. radius_db: ensure it points at our database (default is already "radius")
+# 4. radius_db: ensure it points at our database (default is already "radius").
+#    Lambda replacement to preserve any backslashes in the DB name.
 text = re.sub(
     r'^(\s*)radius_db\s*=\s*".*?"\s*$',
-    rf'\1radius_db = "{_esc(db)}"',
+    lambda m, _v=_esc(db): f'{m.group(1)}radius_db = "{_v}"',
     text,
     count=1,
     flags=re.M,
