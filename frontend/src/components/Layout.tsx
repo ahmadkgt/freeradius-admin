@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { NavLink, Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import {
   LayoutDashboard,
@@ -12,6 +12,7 @@ import {
   Sun,
   Moon,
   Menu,
+  X,
   LogOut,
   UserCircle,
 } from "lucide-react";
@@ -41,9 +42,23 @@ export default function Layout() {
   const { t, i18n } = useTranslation();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [pwOpen, setPwOpen] = useState(false);
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileOpen(false);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = mobileOpen ? "hidden" : prev;
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileOpen]);
 
   const toggleLang = () => {
     void i18n.changeLanguage(i18n.language?.startsWith("ar") ? "en" : "ar");
@@ -62,13 +77,36 @@ export default function Layout() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex">
+      {mobileOpen && (
+        <button
+          type="button"
+          aria-label={t("common.close")}
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
       <aside
         className={cn(
-          "border-e bg-card transition-all duration-200 hidden md:flex flex-col",
-          collapsed ? "w-16" : "w-64",
+          "border-e bg-card flex flex-col transition-transform duration-200",
+          "fixed inset-y-0 start-0 z-50 w-64 md:static md:z-auto md:translate-x-0",
+          collapsed ? "md:w-16" : "md:w-64",
+          mobileOpen
+            ? "translate-x-0"
+            : "-translate-x-full rtl:translate-x-full md:translate-x-0",
         )}
       >
-        <div className="h-16 flex items-center px-4 gap-3 border-b">
+        <div className="h-16 flex items-center px-4 gap-3 border-b md:hidden">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileOpen(false)}
+            aria-label={t("common.close")}
+            className="ms-auto"
+          >
+            <X className="h-5 w-5" />
+          </Button>
+        </div>
+        <div className="h-16 hidden md:flex items-center px-4 gap-3 border-b">
           <div className="h-9 w-9 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold shrink-0">
             R
           </div>
@@ -99,26 +137,35 @@ export default function Layout() {
             </NavLink>
           ))}
         </nav>
-        <div className="p-2 border-t">
+        <div className="p-2 border-t hidden md:block">
           <Button
             variant="ghost"
             size="sm"
             onClick={() => setCollapsed((c) => !c)}
             className="w-full justify-start"
+            aria-label={t("common.menu")}
           >
             <Menu className="h-4 w-4" />
-            {!collapsed && <span className="ms-1">Toggle</span>}
+            {!collapsed && <span className="ms-1">{t("common.menu")}</span>}
           </Button>
         </div>
       </aside>
 
       <div className="flex-1 flex flex-col min-w-0">
-        <header className="h-16 border-b bg-card/80 backdrop-blur sticky top-0 z-40 flex items-center px-4 md:px-6 gap-3 justify-between">
-          <div className="flex items-center gap-3 md:hidden">
+        <header className="h-16 border-b bg-card/80 backdrop-blur sticky top-0 z-30 flex items-center px-4 md:px-6 gap-3 justify-between">
+          <div className="flex items-center gap-2 md:hidden">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setMobileOpen(true)}
+              aria-label={t("common.menu")}
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
             <div className="h-8 w-8 rounded-md bg-primary flex items-center justify-center text-primary-foreground font-bold">
               R
             </div>
-            <span className="font-semibold">{t("app.title")}</span>
+            <span className="font-semibold truncate">{t("app.title")}</span>
           </div>
           <div className="flex items-center gap-2 ms-auto">
             <Button variant="ghost" size="sm" onClick={toggleLang} title={t("common.language")}>
