@@ -1,6 +1,21 @@
-from datetime import datetime
+from datetime import datetime, time
+from decimal import Decimal
 
-from sqlalchemy import BigInteger, Boolean, DateTime, Integer, String, func
+from sqlalchemy import (
+    BigInteger,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    Integer,
+    Numeric,
+    String,
+    Text,
+    Time,
+    func,
+)
+from sqlalchemy import (
+    Enum as SqlEnum,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 
 from .database import Base
@@ -125,4 +140,101 @@ class AdminUser(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.current_timestamp(), default=func.current_timestamp()
+    )
+
+
+# ===================================================================
+# Phase 1 — ISP / subscription model
+# ===================================================================
+
+
+class Profile(Base):
+    """A service plan (package) — speed, price, duration."""
+
+    __tablename__ = "profiles"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(64), unique=True, index=True)
+    type: Mapped[str] = mapped_column(
+        SqlEnum("prepaid", "postpaid", "expired", name="profile_type"),
+        default="prepaid",
+        server_default="prepaid",
+    )
+    short_description: Mapped[str | None] = mapped_column(Text, nullable=True)
+    unit_price: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), default=Decimal("0"), server_default="0"
+    )
+    vat_percent: Mapped[Decimal] = mapped_column(
+        Numeric(5, 2), default=Decimal("0"), server_default="0"
+    )
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
+    duration_value: Mapped[int] = mapped_column(Integer, default=30, server_default="30")
+    duration_unit: Mapped[str] = mapped_column(
+        SqlEnum("days", "months", "years", name="duration_unit"),
+        default="days",
+        server_default="days",
+    )
+    use_fixed_time: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="0"
+    )
+    fixed_expiration_time: Mapped[time | None] = mapped_column(Time, nullable=True)
+    download_rate_kbps: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    upload_rate_kbps: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    pool_name: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    expired_next_profile_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True
+    )
+    awarded_reward_points: Mapped[Decimal] = mapped_column(
+        Numeric(10, 2), default=Decimal("0"), server_default="0"
+    )
+    available_in_user_panel: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="0"
+    )
+    is_public: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
+    enable_sub_managers: Mapped[bool] = mapped_column(
+        Boolean, default=False, server_default="0"
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.current_timestamp(), default=func.current_timestamp()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.current_timestamp(),
+        default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
+    )
+
+
+class SubscriberProfile(Base):
+    """Per-user subscription metadata. The username links to RadCheck.username."""
+
+    __tablename__ = "subscriber_profiles"
+
+    username: Mapped[str] = mapped_column(String(64), primary_key=True)
+    profile_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True
+    )
+    parent_manager_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, server_default="1")
+    expiration_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    balance: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), default=Decimal("0"), server_default="0"
+    )
+    debt: Mapped[Decimal] = mapped_column(
+        Numeric(12, 2), default=Decimal("0"), server_default="0"
+    )
+    first_name: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    last_name: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    email: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    address: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.current_timestamp(), default=func.current_timestamp()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.current_timestamp(),
+        default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
     )

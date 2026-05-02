@@ -9,6 +9,12 @@ import {
   XCircle,
   ArrowUpRight,
   TrendingUp,
+  Wifi,
+  WifiOff,
+  Clock,
+  AlertTriangle,
+  AlertCircle,
+  Ban,
 } from "lucide-react";
 import {
   ResponsiveContainer,
@@ -115,6 +121,47 @@ export default function Dashboard() {
           label={t("dashboard.stats.total_traffic")}
           value={formatBytes(traffic, i18n.language)}
           Icon={TrendingUp}
+        />
+      </div>
+
+      <h3 className="text-sm font-semibold text-muted-foreground mt-6 mb-3">
+        {t("dashboard.lifecycle")}
+      </h3>
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <StatCard
+          label={t("user_status.active_online")}
+          value={stats.data?.online_users ?? "—"}
+          Icon={Wifi}
+        />
+        <StatCard
+          label={t("user_status.active_offline")}
+          value={
+            stats.data
+              ? Math.max(0, stats.data.active_users - stats.data.online_users)
+              : "—"
+          }
+          Icon={WifiOff}
+        />
+        <StatCard
+          label={t("user_status.expiring_soon")}
+          value={stats.data?.expiring_soon ?? "—"}
+          hint={`${t("dashboard.stats.expiring_today")}: ${stats.data?.expiring_today ?? "—"}`}
+          Icon={Clock}
+        />
+        <StatCard
+          label={t("user_status.expired")}
+          value={stats.data?.expired_users ?? "—"}
+          Icon={AlertTriangle}
+        />
+        <StatCard
+          label={t("user_status.expired_online")}
+          value={stats.data?.expired_online_users ?? "—"}
+          Icon={AlertCircle}
+        />
+        <StatCard
+          label={t("user_status.disabled")}
+          value={stats.data?.disabled_users ?? "—"}
+          Icon={Ban}
         />
       </div>
 

@@ -48,6 +48,77 @@ def stats(db: Session = Depends(get_db)) -> schemas.DashboardStats:
         select(func.coalesce(func.sum(models.RadAcct.acctoutputoctets), 0))
     ).scalar_one()
 
+    # Lifecycle stats — derived from subscriber_profiles + radacct (open sessions).
+    now = datetime.utcnow()
+    expiring_soon_threshold = now + timedelta(days=3)
+    end_of_today = today_start + timedelta(days=1)
+
+    online_usernames = set(
+        u
+        for u in db.execute(
+            select(distinct(models.RadAcct.username)).where(
+                models.RadAcct.acctstoptime.is_(None),
+                models.RadAcct.username != "",
+            )
+        )
+        .scalars()
+        .all()
+        if u
+    )
+    online_users = len(online_usernames)
+
+    all_subs = list(
+        db.execute(select(models.SubscriberProfile)).scalars().all()
+    )
+
+    def _is_expired(s: models.SubscriberProfile) -> bool:
+        return s.expiration_at is not None and s.expiration_at <= now
+
+    disabled_users = sum(1 for s in all_subs if not s.enabled)
+    expired_users = sum(
+        1
+        for s in all_subs
+        if s.enabled and _is_expired(s) and s.username not in online_usernames
+    )
+    expired_online_users = sum(
+        1
+        for s in all_subs
+        if s.enabled and _is_expired(s) and s.username in online_usernames
+    )
+    expiring_today = sum(
+        1
+        for s in all_subs
+        if s.enabled
+        and s.expiration_at is not None
+        and now < s.expiration_at <= end_of_today
+    )
+    expiring_soon = sum(
+        1
+        for s in all_subs
+        if s.enabled
+        and s.expiration_at is not None
+        and now < s.expiration_at <= expiring_soon_threshold
+    )
+
+    # All radcheck users — even those without a subscriber row are treated as enabled+no-expiry.
+    all_users = list(
+        db.execute(
+            select(distinct(models.RadCheck.username)).where(models.RadCheck.username != "")
+        )
+        .scalars()
+        .all()
+    )
+    sub_by_user = {s.username: s for s in all_subs}
+    active_users = 0
+    for u in all_users:
+        s = sub_by_user.get(u)
+        if s is None:
+            active_users += 1  # no subscription row → treat as active
+        elif s.enabled and not _is_expired(s):
+            active_users += 1
+
+    offline_users = max(0, len(all_users) - online_users)
+
     return schemas.DashboardStats(
         total_users=total_users,
         total_groups=total_groups,
@@ -58,6 +129,14 @@ def stats(db: Session = Depends(get_db)) -> schemas.DashboardStats:
         auth_rejects_today=auth_rejects_today,
         total_input_bytes=int(total_input or 0),
         total_output_bytes=int(total_output or 0),
+        active_users=active_users,
+        online_users=online_users,
+        offline_users=offline_users,
+        expired_users=expired_users,
+        expired_online_users=expired_online_users,
+        expiring_today=expiring_today,
+        expiring_soon=expiring_soon,
+        disabled_users=disabled_users,
     )
 
 

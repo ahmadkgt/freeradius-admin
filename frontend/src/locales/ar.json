@@ -5,11 +5,14 @@
   },
   "nav": {
     "dashboard": "لوحة التحكم",
-    "users": "المستخدمون",
+    "users": "المشتركون",
+    "online_users": "المتصلون",
+    "profiles": "الباقات",
     "groups": "المجموعات",
     "nas": "أجهزة NAS / العملاء",
     "accounting": "السجلات والجلسات",
-    "auth_log": "سجل المصادقة"
+    "auth_log": "سجل المصادقة",
+    "system": "معلومات النظام"
   },
   "common": {
     "search": "بحث",
@@ -51,41 +54,130 @@
     "username": "اسم المستخدم",
     "password": "كلمة المرور",
     "groups": "المجموعات",
-    "framed_ip": "عنوان IP المخصص"
+    "framed_ip": "عنوان IP المخصص",
+    "status": "الحالة",
+    "enabled": "مفعّل",
+    "disabled": "معطّل",
+    "currency": "ل.س"
+  },
+  "user_status": {
+    "active_online": "نشط (متصل)",
+    "active_offline": "نشط (غير متصل)",
+    "expiring_soon": "قارب على الانتهاء",
+    "expired": "منتهي",
+    "expired_online": "منتهي (متصل)",
+    "disabled": "معطّل"
   },
   "dashboard": {
     "title": "نظرة عامة",
+    "lifecycle": "حالة المشتركين",
     "stats": {
-      "total_users": "إجمالي المستخدمين",
+      "total_users": "إجمالي المشتركين",
       "total_groups": "إجمالي المجموعات",
       "total_nas": "عملاء RADIUS",
       "active_sessions": "الجلسات النشطة",
       "sessions_today": "جلسات اليوم",
       "auth_accepts_today": "قبول اليوم",
       "auth_rejects_today": "رفض اليوم",
-      "total_traffic": "إجمالي حركة البيانات"
+      "total_traffic": "إجمالي حركة البيانات",
+      "expiring_today": "ينتهي اليوم"
     },
     "auth_chart": "نشاط المصادقة (آخر 7 أيام)",
     "chart": {
       "accepts": "قبول",
       "rejects": "رفض"
     },
-    "top_users": "أكثر المستخدمين استهلاكاً",
+    "top_users": "أكثر المشتركين استهلاكاً",
     "sessions": "جلسة",
     "no_data": "لا يوجد نشاط حتى الآن"
   },
   "users": {
-    "title": "المستخدمون",
-    "create": "إنشاء مستخدم",
-    "edit": "تعديل المستخدم",
-    "delete_confirm": "هل تريد حذف المستخدم '{{username}}'؟ سيؤدي هذا إلى إزالة جميع سمات RADIUS وعلاقات المجموعة.",
-    "search_placeholder": "ابحث باسم المستخدم…",
+    "title": "المشتركون",
+    "create": "إنشاء مشترك",
+    "edit": "تعديل المشترك",
+    "delete_confirm": "هل تريد حذف المشترك '{{username}}'؟ سيؤدي هذا إلى إزالة جميع سمات RADIUS وعلاقات المجموعة.",
+    "search_placeholder": "ابحث باسم المستخدم أو معلومات الاتصال…",
     "groups_placeholder": "أسماء المجموعات مفصولة بفواصل",
+    "all_statuses": "جميع الحالات",
     "fields": {
       "check_attrs": "سمات التحقق",
       "reply_attrs": "سمات الاستجابة",
-      "no_attrs": "لا توجد سمات"
+      "no_attrs": "لا توجد سمات",
+      "subscription": "الاشتراك",
+      "contact": "بيانات الاتصال",
+      "profile": "الباقة",
+      "no_profile": "— لا شيء —",
+      "expiration": "تاريخ الانتهاء",
+      "balance": "الرصيد",
+      "debt": "الدين",
+      "first_name": "الاسم",
+      "last_name": "اللقب",
+      "email": "البريد الإلكتروني",
+      "phone": "الهاتف",
+      "address": "العنوان",
+      "notes": "ملاحظات",
+      "enabled": "مفعّل",
+      "full_name": "الاسم الكامل"
     }
+  },
+  "online_users": {
+    "title": "المشتركون المتصلون",
+    "connected": "متصل",
+    "auto_refresh": "تحديث تلقائي كل 5 ثوانٍ",
+    "empty": "لا توجد جلسات نشطة",
+    "fields": {
+      "profile": "الباقة",
+      "framed_ip": "عنوان IP",
+      "nas_ip": "NAS",
+      "calling_station": "محطة الاتصال",
+      "duration": "المدة",
+      "input": "وارد",
+      "output": "صادر"
+    }
+  },
+  "profiles": {
+    "title": "باقات الخدمة",
+    "create": "إنشاء باقة",
+    "edit": "تعديل الباقة",
+    "delete_confirm": "هل تريد حذف الباقة '{{name}}'؟",
+    "delete_failed": "تعذّر حذف الباقة.",
+    "search_placeholder": "ابحث بالاسم…",
+    "type": {
+      "prepaid": "مسبقة الدفع",
+      "postpaid": "آجلة الدفع",
+      "expired": "منتهية"
+    },
+    "duration_unit": {
+      "days": "أيام",
+      "months": "أشهر",
+      "years": "سنوات"
+    },
+    "fields": {
+      "price": "السعر",
+      "vat_percent": "ضريبة القيمة المضافة %",
+      "duration": "المدة",
+      "duration_value": "المدة",
+      "duration_unit": "الوحدة",
+      "speed": "السرعة (تنزيل/رفع)",
+      "download_kbps": "التنزيل (kbps)",
+      "upload_kbps": "الرفع (kbps)",
+      "pool_name": "تجمّع IP",
+      "short_description": "وصف مختصر",
+      "users": "المشتركون"
+    }
+  },
+  "system_info": {
+    "title": "معلومات النظام",
+    "version": "الإصدار",
+    "uptime": "مدة التشغيل",
+    "load_avg": "متوسط الحمل",
+    "memory": "الذاكرة",
+    "disk": "القرص",
+    "cpu": "المعالج",
+    "db_size": "حجم قاعدة البيانات",
+    "connections": "اتصالات DB",
+    "users": "المشتركون",
+    "profiles": "الباقات"
   },
   "groups": {
     "title": "المجموعات",
