@@ -139,9 +139,14 @@ def update_profile(
     profile_id: int,
     payload: schemas.ProfileUpdate,
     db: Session = Depends(get_db),
+    current: models.Manager = Depends(get_current_manager),
 ) -> schemas.ProfileOut:
     profile = db.get(models.Profile, profile_id)
     if profile is None:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    allowed = _allowed_profile_ids_for(current)
+    if allowed is not None and profile.id not in allowed:
+        # Mask out-of-scope profiles as 404 to avoid leaking their existence.
         raise HTTPException(status_code=404, detail="Profile not found")
     fields = payload.model_dump(exclude_unset=True)
     if "name" in fields and fields["name"] != profile.name:
@@ -166,9 +171,16 @@ def update_profile(
     status_code=204,
     dependencies=[Depends(require_permission("profiles.manage"))],
 )
-def delete_profile(profile_id: int, db: Session = Depends(get_db)) -> None:
+def delete_profile(
+    profile_id: int,
+    db: Session = Depends(get_db),
+    current: models.Manager = Depends(get_current_manager),
+) -> None:
     profile = db.get(models.Profile, profile_id)
     if profile is None:
+        raise HTTPException(status_code=404, detail="Profile not found")
+    allowed = _allowed_profile_ids_for(current)
+    if allowed is not None and profile.id not in allowed:
         raise HTTPException(status_code=404, detail="Profile not found")
     in_use = db.execute(
         select(func.count()).select_from(

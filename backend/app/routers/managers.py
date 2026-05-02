@@ -231,8 +231,32 @@ def update_manager(
     # The root manager cannot be disabled or have its is_root flag changed.
     fields = payload.model_dump(exclude_unset=True)
 
+    is_self = manager_id == current.id
+
     if m.is_root and "enabled" in fields and fields["enabled"] is False:
         raise HTTPException(status_code=400, detail="Cannot disable the root manager")
+
+    # A non-root manager cannot disable themselves (would lock them out).
+    if is_self and not current.is_root and fields.get("enabled") is False:
+        raise HTTPException(status_code=400, detail="Cannot disable yourself")
+
+    # A non-root manager cannot grant themselves financial/quota fields — those
+    # are only adjustable by an ancestor. (Without this, a sub-manager with
+    # `managers.manage` could PATCH /api/managers/{own-id} and set their own
+    # balance / profit share / quota.)
+    if is_self and not current.is_root:
+        sensitive_keys = {
+            "balance",
+            "profit_share_percent",
+            "max_users_quota",
+            "allowed_profile_ids",
+        }
+        for key in sensitive_keys:
+            if key in fields:
+                raise HTTPException(
+                    status_code=403,
+                    detail=f"Cannot modify your own '{key}' — ask a parent manager.",
+                )
 
     if "password" in fields and fields["password"]:
         m.password_hash = hash_password(fields.pop("password"))
@@ -246,6 +270,12 @@ def update_manager(
             if "*" not in own:
                 requested = [p for p in requested if p in own]
         requested = [p for p in requested if p != permissions.WILDCARD]
+        # Self-PATCH cannot change one's own permission set — only an ancestor can.
+        if is_self and not current.is_root and set(requested) != set(m.permissions or []):
+            raise HTTPException(
+                status_code=403,
+                detail="Cannot modify your own permissions — ask a parent manager.",
+            )
         fields["permissions"] = requested
 
     for k, v in fields.items():
