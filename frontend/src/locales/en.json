@@ -15,7 +15,10 @@
     "system": "System info",
     "managers": "Managers",
     "invoices": "Invoices",
-    "reports": "Reports"
+    "reports": "Reports",
+    "notifications": "Notifications",
+    "notification_templates": "Notification Templates",
+    "whatsapp": "WhatsApp"
   },
   "common": {
     "search": "Search",
@@ -421,5 +424,94 @@
       "opening_balance": "Opening balance"
     },
     "no_entries": "No ledger entries"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "description": "WhatsApp message log: every queued, sent, and failed notification.",
+    "filter_status": "Status",
+    "all_statuses": "All",
+    "search_placeholder": "Search by phone, body, or username",
+    "status": {
+      "pending": "Pending",
+      "sent": "Sent",
+      "failed": "Failed"
+    },
+    "event": {
+      "custom": "Custom",
+      "renewal_reminder": "Renewal reminder",
+      "expired": "Expired",
+      "debt_warning": "Debt warning",
+      "invoice_issued": "Invoice issued",
+      "welcome": "Welcome"
+    },
+    "columns": {
+      "id": "#",
+      "subscriber": "Subscriber",
+      "event": "Event",
+      "phone": "Phone",
+      "body": "Body",
+      "status": "Status",
+      "error": "Error",
+      "sent_at": "Sent at",
+      "created_at": "Queued at",
+      "actions": "Actions"
+    },
+    "retry": "Retry",
+    "no_messages": "No notifications yet.",
+    "send_test": "Send test message",
+    "send_test_to": "Phone (with country code)",
+    "send_test_body": "Message",
+    "send_test_send": "Send"
+  },
+  "notification_templates": {
+    "title": "Notification templates",
+    "description": "Compose WhatsApp templates with placeholders like {{full_name}}, {{expiration_at}}, {{debt}}.",
+    "create": "New template",
+    "edit_dialog_title": "Edit template",
+    "create_dialog_title": "New template",
+    "delete_confirm": "Delete this template?",
+    "name": "Name",
+    "event": "Trigger",
+    "enabled": "Enabled",
+    "body_ar": "Arabic body",
+    "body_en": "English body",
+    "config": "Config (JSON)",
+    "variables_hint": "Available placeholders",
+    "preview": "Preview",
+    "save": "Save",
+    "no_templates": "No templates yet.",
+    "must_have_body": "At least one of Arabic / English body is required."
+  },
+  "whatsapp": {
+    "title": "WhatsApp connection",
+    "description": "Pair the panel's WhatsApp Web session by scanning the QR with your phone.",
+    "status_connected": "Connected",
+    "status_disconnected": "Disconnected",
+    "status_jid": "Linked phone",
+    "status_last_error": "Last error",
+    "qr_scan_hint": "Open WhatsApp on your phone, then go to Settings → Linked Devices → Link a Device, and scan this QR.",
+    "qr_loading": "Waiting for the gateway to generate a QR…",
+    "qr_already_paired": "Already paired. Disconnect first if you need a fresh QR.",
+    "qr_unavailable": "Gateway unreachable — check the docker container logs.",
+    "refresh": "Refresh",
+    "disconnect": "Disconnect",
+    "disconnect_confirm": "Disconnect and require a new QR scan?",
+    "send_test": "Send test message",
+    "send_to": "Phone (with country code)",
+    "send_body": "Message",
+    "send": "Send"
+  },
+  "send_notification": {
+    "title": "Send WhatsApp message",
+    "subscriber": "Subscriber",
+    "template": "Template",
+    "no_template": "No template (custom message)",
+    "locale": "Language",
+    "body": "Message",
+    "body_hint": "Custom message body — overrides the template if both are set.",
+    "send": "Send",
+    "result_sent": "Message sent.",
+    "result_failed": "Message failed: {{error}}",
+    "no_phone": "Subscriber has no phone number on file."
   }
 }

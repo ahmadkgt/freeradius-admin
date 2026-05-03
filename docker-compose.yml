@@ -25,11 +25,25 @@ services:
     environment:
       DATABASE_URL: mysql+pymysql://radius:radiuspass@db:3306/radius?charset=utf8mb4
       CORS_ORIGINS: "http://localhost:5173,http://localhost:8080"
+      WHATSAPP_GATEWAY_URL: "http://whatsapp:3001"
+      WHATSAPP_API_KEY: "${WHATSAPP_API_KEY:-dev-whatsapp-key}"
     ports:
       - "8000:8000"
     depends_on:
       db:
         condition: service_healthy
+
+  whatsapp:
+    build:
+      context: ./whatsapp
+    restart: unless-stopped
+    environment:
+      PORT: "3001"
+      AUTH_DIR: /app/auth
+      WHATSAPP_API_KEY: "${WHATSAPP_API_KEY:-dev-whatsapp-key}"
+      LOG_LEVEL: info
+    volumes:
+      - whatsapp-auth:/app/auth
 
   frontend:
     build:
@@ -42,3 +56,4 @@ services:
 
 volumes:
   db-data:
+  whatsapp-auth:

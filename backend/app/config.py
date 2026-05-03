@@ -16,9 +16,18 @@ class Settings(BaseSettings):
     initial_admin_username: str = "admin"
     initial_admin_password: str = "admin"
 
+    # --- WhatsApp gateway (Phase 4) ---
+    whatsapp_gateway_url: str = ""
+    whatsapp_api_key: str = ""
+
     @property
     def cors_origin_list(self) -> list[str]:
         return [o.strip() for o in self.cors_origins.split(",") if o.strip()]
 
 
 settings = Settings()
+
+
+def get_settings() -> Settings:
+    """Lazy accessor used by services that don't want a module-level import."""
+    return settings

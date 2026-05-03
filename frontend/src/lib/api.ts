@@ -248,7 +248,11 @@ export type Permission =
   | "invoices.view"
   | "invoices.manage"
   | "reports.view"
-  | "settings.manage";
+  | "settings.manage"
+  | "notifications.view"
+  | "notifications.send"
+  | "notifications.templates.manage"
+  | "notifications.whatsapp.manage";
 
 export const ALL_PERMISSIONS: Permission[] = [
   "users.view",
@@ -265,6 +269,10 @@ export const ALL_PERMISSIONS: Permission[] = [
   "invoices.manage",
   "reports.view",
   "settings.manage",
+  "notifications.view",
+  "notifications.send",
+  "notifications.templates.manage",
+  "notifications.whatsapp.manage",
 ];
 
 export interface AdminMe {
@@ -508,4 +516,80 @@ export interface DebtSummary {
   total_subscriber_count: number;
   total_unpaid_invoice_amount: string;
   rows: DebtorRow[];
+}
+
+// ----- Phase 4: WhatsApp + notifications -----
+
+export type NotificationEvent =
+  | "custom"
+  | "renewal_reminder"
+  | "expired"
+  | "debt_warning"
+  | "invoice_issued"
+  | "welcome";
+
+export interface NotificationTemplate {
+  id: number;
+  name: string;
+  event: NotificationEvent;
+  enabled: boolean;
+  body_ar?: string | null;
+  body_en?: string | null;
+  config?: Record<string, unknown> | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+}
+
+export interface NotificationTemplateCreate {
+  name: string;
+  event: NotificationEvent;
+  enabled: boolean;
+  body_ar?: string | null;
+  body_en?: string | null;
+  config?: Record<string, unknown> | null;
+}
+
+export interface NotificationLog {
+  id: number;
+  subscriber_username?: string | null;
+  manager_id: number;
+  template_id?: number | null;
+  channel: "whatsapp";
+  event: NotificationEvent;
+  phone?: string | null;
+  body: string;
+  status: "pending" | "sent" | "failed";
+  error?: string | null;
+  provider_message_id?: string | null;
+  sent_at?: string | null;
+  created_at?: string | null;
+}
+
+export interface WhatsAppStatus {
+  connected: boolean;
+  jid?: string | null;
+  has_qr: boolean;
+  last_error?: string | null;
+  last_status_at?: string | null;
+}
+
+export interface SendNotificationPayload {
+  subscriber_username: string;
+  template_id?: number | null;
+  body?: string | null;
+  locale?: "ar" | "en";
+}
+
+export interface BulkSendPayload {
+  template_id: number;
+  locale?: "ar" | "en";
+  usernames?: string[] | null;
+  filter_status?: string | null;
+}
+
+export interface BulkSendResult {
+  queued: number;
+  sent: number;
+  failed: number;
+  notifications: NotificationLog[];
 }

@@ -633,3 +633,101 @@ class Paginated[T](BaseModel):
     total: int
     page: int
     page_size: int
+
+
+# ---- Phase 4: notification templates / messages / WhatsApp ----
+
+
+_NOTIFICATION_EVENTS = Literal[
+    "custom",
+    "renewal_reminder",
+    "expired",
+    "debt_warning",
+    "invoice_issued",
+    "welcome",
+]
+
+
+class NotificationTemplateBase(BaseModel):
+    name: str = Field(..., min_length=1, max_length=128)
+    event: _NOTIFICATION_EVENTS = "custom"
+    enabled: bool = True
+    body_ar: str | None = None
+    body_en: str | None = None
+    config: dict | None = None
+
+
+class NotificationTemplateCreate(NotificationTemplateBase):
+    pass
+
+
+class NotificationTemplateUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=128)
+    event: _NOTIFICATION_EVENTS | None = None
+    enabled: bool | None = None
+    body_ar: str | None = None
+    body_en: str | None = None
+    config: dict | None = None
+
+
+class NotificationTemplateOut(NotificationTemplateBase):
+    id: int
+    created_at: datetime | None = None
+    updated_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class NotificationOut(BaseModel):
+    id: int
+    subscriber_username: str | None = None
+    manager_id: int
+    template_id: int | None = None
+    channel: Literal["whatsapp"] = "whatsapp"
+    event: _NOTIFICATION_EVENTS = "custom"
+    phone: str | None = None
+    body: str
+    status: Literal["pending", "sent", "failed"]
+    error: str | None = None
+    provider_message_id: str | None = None
+    sent_at: datetime | None = None
+    created_at: datetime | None = None
+
+    model_config = {"from_attributes": True}
+
+
+class NotificationSendRequest(BaseModel):
+    """Send a single message — either ad-hoc text or rendered from a template."""
+
+    subscriber_username: str = Field(..., min_length=1, max_length=64)
+    template_id: int | None = None
+    body: str | None = None  # used when template_id is None
+    locale: Literal["ar", "en"] = "ar"
+
+
+class NotificationBulkSendRequest(BaseModel):
+    """Render `template_id` against every subscriber matching `filter_status` (or
+    against the explicit `usernames` list) and queue + send.
+
+    `filter_status` matches the `SubscriberStatus` enum used on the
+    subscribers page; pass `None` to send to all in-scope subscribers."""
+
+    template_id: int
+    locale: Literal["ar", "en"] = "ar"
+    usernames: list[str] | None = None
+    filter_status: str | None = None
+
+
+class NotificationSendResponse(BaseModel):
+    queued: int
+    sent: int
+    failed: int
+    notifications: list[NotificationOut] = []
+
+
+class WhatsAppStatus(BaseModel):
+    connected: bool
+    jid: str | None = None
+    has_qr: bool = False
+    last_error: str | None = None
+    last_status_at: datetime | None = None

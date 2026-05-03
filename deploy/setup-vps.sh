@@ -94,11 +94,13 @@ if [[ ! -f .env ]]; then
     DB_ROOT=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
     DB_USER_PW=$(python3 -c "import secrets; print(secrets.token_urlsafe(24))")
     ADMIN_PW=$(python3 -c "import secrets; print(secrets.token_urlsafe(18))")
+    WHATSAPP_KEY=$(python3 -c "import secrets; print(secrets.token_urlsafe(32))")
     sed -i \
         -e "s|CHANGE_ME_long_random_secret|${JWT_SECRET}|" \
         -e "s|CHANGE_ME_strong_root_password|${DB_ROOT}|" \
         -e "s|CHANGE_ME_strong_db_password|${DB_USER_PW}|" \
         -e "s|CHANGE_ME_initial_admin_password|${ADMIN_PW}|" \
+        -e "s|CHANGE_ME_long_random_whatsapp_key|${WHATSAPP_KEY}|" \
         .env
     chmod 600 .env
     log "Generated .env. Initial admin credentials:"

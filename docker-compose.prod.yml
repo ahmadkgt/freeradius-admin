@@ -34,11 +34,19 @@ services:
       JWT_EXPIRE_MINUTES: ${JWT_EXPIRE_MINUTES:-480}
       INITIAL_ADMIN_USERNAME: ${INITIAL_ADMIN_USERNAME:-admin}
       INITIAL_ADMIN_PASSWORD: ${INITIAL_ADMIN_PASSWORD}
+      WHATSAPP_GATEWAY_URL: ${WHATSAPP_GATEWAY_URL:-http://whatsapp:3001}
+      WHATSAPP_API_KEY: ${WHATSAPP_API_KEY}
     # Bind backend to localhost only; the frontend container reverse-proxies /api
     # over the internal Docker network, and the host-level nginx reverse proxies
     # to the frontend on 127.0.0.1:8080.
     ports:
       - "127.0.0.1:8000:8000"
+
+  whatsapp:
+    environment:
+      WHATSAPP_API_KEY: ${WHATSAPP_API_KEY}
+    # Never expose the WhatsApp gateway publicly — backend reaches it only
+    # over the internal docker network.
 
   frontend:
     ports:

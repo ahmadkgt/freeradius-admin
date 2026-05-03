@@ -16,12 +16,14 @@ from .routers import (
     invoices,
     managers,
     nas,
+    notifications,
     profiles,
     reports,
     system,
     users,
 )
 from .security import get_current_manager, hash_password
+from .services import scheduler as notification_scheduler
 
 log = logging.getLogger("uvicorn.error")
 
@@ -60,7 +62,19 @@ def _bootstrap_admin() -> None:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     _bootstrap_admin()
-    yield
+    # Phase 4 — start the WhatsApp notification scheduler. Safe to call
+    # even when the gateway isn't configured: the jobs short-circuit.
+    try:
+        notification_scheduler.start()
+    except Exception:
+        log.exception("failed to start notification scheduler — continuing without it")
+    try:
+        yield
+    finally:
+        try:
+            notification_scheduler.shutdown()
+        except Exception:
+            pass
 
 
 app = FastAPI(title=settings.app_name, version="0.1.0", lifespan=lifespan)
@@ -94,3 +108,4 @@ app.include_router(system.router, prefix="/api", dependencies=auth_dep)
 app.include_router(managers.router, prefix="/api", dependencies=auth_dep)
 app.include_router(invoices.router, prefix="/api", dependencies=auth_dep)
 app.include_router(reports.router, prefix="/api", dependencies=auth_dep)
+app.include_router(notifications.router, prefix="/api", dependencies=auth_dep)

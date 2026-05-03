@@ -1,9 +1,11 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Search, Eye, RefreshCw } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Eye, RefreshCw, MessageSquare } from "lucide-react";
 import {
   api,
+  type NotificationLog,
+  type NotificationTemplate,
   type Paginated,
   type Profile,
   type RenewPayload,
@@ -87,6 +89,7 @@ export default function UsersPage() {
   const qc = useQueryClient();
   const { hasPermission } = useAuth();
   const canRenew = hasPermission("users.renew");
+  const canNotify = hasPermission("notifications.send");
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<UserStatus | "">("");
   const [page, setPage] = useState(1);
@@ -119,6 +122,42 @@ export default function UsersPage() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["users"] });
       qc.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
+
+  const [sendOpen, setSendOpen] = useState(false);
+  const [sendUser, setSendUser] = useState<UserSummary | null>(null);
+  const [sendForm, setSendForm] = useState<{
+    template_id: string;
+    locale: "ar" | "en";
+    body: string;
+  }>({ template_id: "", locale: "ar", body: "" });
+  const [sendResult, setSendResult] = useState<string | null>(null);
+
+  const templates = useQuery<NotificationTemplate[]>({
+    queryKey: ["notification-templates"],
+    enabled: canNotify,
+    queryFn: async () =>
+      (await api.get<NotificationTemplate[]>("/notifications/templates")).data,
+  });
+
+  const sendNotification = useMutation({
+    mutationFn: async (payload: Record<string, unknown>) =>
+      (await api.post<NotificationLog>("/notifications/send", payload)).data,
+    onSuccess: (data) => {
+      qc.invalidateQueries({ queryKey: ["notifications"] });
+      if (data.status === "sent") {
+        setSendResult("sent");
+      } else if (data.status === "failed") {
+        setSendResult(data.error || "failed");
+      } else {
+        setSendResult("queued");
+      }
+    },
+    onError: (err) => {
+      const detail =
+        (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail ?? String(err);
+      setSendResult(detail);
     },
   });
 
@@ -382,6 +421,21 @@ export default function UsersPage() {
                           aria-label={t("invoices.renew_user")}
                         >
                           <RefreshCw className="h-4 w-4" />
+                        </Button>
+                      )}
+                      {canNotify && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setSendUser(u);
+                            setSendForm({ template_id: "", locale: "ar", body: "" });
+                            setSendResult(null);
+                            setSendOpen(true);
+                          }}
+                          aria-label={t("send_notification.title")}
+                        >
+                          <MessageSquare className="h-4 w-4 text-emerald-500" />
                         </Button>
                       )}
                       <Button
@@ -752,6 +806,101 @@ export default function UsersPage() {
               }}
             >
               {t("common.save")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Send WhatsApp notification dialog */}
+      <Dialog open={sendOpen} onOpenChange={setSendOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>{t("send_notification.title")}</DialogTitle>
+            {sendUser && (
+              <DialogDescription>
+                {t("send_notification.subscriber")}: <span className="font-mono">{sendUser.username}</span>
+                {sendUser.phone && <> · {sendUser.phone}</>}
+              </DialogDescription>
+            )}
+          </DialogHeader>
+          {sendUser && !sendUser.phone ? (
+            <div className="text-sm text-red-500">{t("send_notification.no_phone")}</div>
+          ) : (
+            <div className="grid gap-3">
+              <div className="grid gap-1">
+                <Label>{t("send_notification.template")}</Label>
+                <select
+                  className="border rounded-md h-10 px-3 bg-background"
+                  value={sendForm.template_id}
+                  onChange={(e) => setSendForm({ ...sendForm, template_id: e.target.value })}
+                >
+                  <option value="">{t("send_notification.no_template")}</option>
+                  {(templates.data || []).map((tpl) => (
+                    <option key={tpl.id} value={tpl.id}>
+                      {tpl.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid gap-1">
+                <Label>{t("send_notification.locale")}</Label>
+                <select
+                  className="border rounded-md h-10 px-3 bg-background"
+                  value={sendForm.locale}
+                  onChange={(e) =>
+                    setSendForm({ ...sendForm, locale: e.target.value as "ar" | "en" })
+                  }
+                >
+                  <option value="ar">العربية</option>
+                  <option value="en">English</option>
+                </select>
+              </div>
+              <div className="grid gap-1">
+                <Label>{t("send_notification.body")}</Label>
+                <textarea
+                  className="border rounded-md p-2 bg-background text-sm min-h-[100px]"
+                  placeholder={t("send_notification.body_hint")}
+                  value={sendForm.body}
+                  onChange={(e) => setSendForm({ ...sendForm, body: e.target.value })}
+                />
+              </div>
+              {sendResult && (
+                <div
+                  className={
+                    sendResult === "sent"
+                      ? "text-sm text-emerald-600"
+                      : "text-sm text-red-500"
+                  }
+                >
+                  {sendResult === "sent"
+                    ? t("send_notification.result_sent")
+                    : t("send_notification.result_failed", { error: sendResult })}
+                </div>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setSendOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              disabled={
+                sendNotification.isPending ||
+                !sendUser?.phone ||
+                (!sendForm.template_id && !sendForm.body.trim())
+              }
+              onClick={() => {
+                if (!sendUser) return;
+                setSendResult(null);
+                sendNotification.mutate({
+                  subscriber_username: sendUser.username,
+                  template_id: sendForm.template_id ? Number(sendForm.template_id) : null,
+                  body: sendForm.body.trim() || null,
+                  locale: sendForm.locale,
+                });
+              }}
+            >
+              {t("send_notification.send")}
             </Button>
           </DialogFooter>
         </DialogContent>
