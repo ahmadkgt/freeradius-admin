@@ -1,12 +1,24 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Search, ChevronRight, Crown } from "lucide-react";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Search,
+  ChevronRight,
+  Crown,
+  BookOpen,
+  ArrowDown,
+  ArrowUp,
+} from "lucide-react";
 import {
   api,
   ALL_PERMISSIONS,
   type Manager,
   type ManagerCreatePayload,
+  type ManagerCreditDebitPayload,
+  type ManagerLedgerEntry,
   type ManagerTreeNode,
   type ManagerUpdatePayload,
   type Paginated,
@@ -115,6 +127,11 @@ export default function ManagersPage() {
   const [form, setForm] = useState<ManagerForm>(emptyForm());
   const [error, setError] = useState<string | null>(null);
 
+  const [ledgerManager, setLedgerManager] = useState<Manager | null>(null);
+  const [adjustOpen, setAdjustOpen] = useState<null | "credit" | "debit">(null);
+  const [adjustAmount, setAdjustAmount] = useState("");
+  const [adjustDescription, setAdjustDescription] = useState("");
+
   const list = useQuery({
     queryKey: ["managers"],
     queryFn: async () => (await api.get<Manager[]>("/managers")).data,
@@ -128,6 +145,37 @@ export default function ManagersPage() {
     queryKey: ["profiles", "all"],
     queryFn: async () =>
       (await api.get<Paginated<Profile>>("/profiles", { params: { page_size: 200 } })).data,
+  });
+
+  const ledger = useQuery({
+    queryKey: ["manager-ledger", ledgerManager?.id],
+    queryFn: async () =>
+      (
+        await api.get<Paginated<ManagerLedgerEntry>>(
+          `/managers/${ledgerManager!.id}/ledger`,
+          { params: { page: 1, page_size: 100 } },
+        )
+      ).data,
+    enabled: ledgerManager != null,
+  });
+
+  const adjust = useMutation({
+    mutationFn: async (vars: {
+      id: number;
+      kind: "credit" | "debit";
+      payload: ManagerCreditDebitPayload;
+    }) =>
+      (
+        await api.post<ManagerLedgerEntry>(
+          `/managers/${vars.id}/${vars.kind}`,
+          vars.payload,
+        )
+      ).data,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["managers"] });
+      qc.invalidateQueries({ queryKey: ["managers-tree"] });
+      qc.invalidateQueries({ queryKey: ["manager-ledger"] });
+    },
   });
 
   const create = useMutation({
@@ -383,6 +431,16 @@ export default function ManagersPage() {
                           )}
                         </TableCell>
                         <TableCell className="text-end space-x-1 rtl:space-x-reverse whitespace-nowrap">
+                          {!m.is_root && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => setLedgerManager(m)}
+                              aria-label={t("ledger.title")}
+                            >
+                              <BookOpen className="h-4 w-4" />
+                            </Button>
+                          )}
                           {canManage && (
                             <>
                               <Button
@@ -587,6 +645,181 @@ export default function ManagersPage() {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Ledger dialog */}
+      <Dialog
+        open={ledgerManager != null}
+        onOpenChange={(v) => {
+          if (!v) {
+            setLedgerManager(null);
+          }
+        }}
+      >
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {t("ledger.title")} — {ledgerManager?.username}
+            </DialogTitle>
+          </DialogHeader>
+          {ledgerManager && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-sm">
+                  <span className="text-muted-foreground">
+                    {t("managers.fields.balance")}:
+                  </span>{" "}
+                  <span className="font-mono font-semibold">
+                    {parseFloat(ledgerManager.balance).toLocaleString()}{" "}
+                    {t("common.currency")}
+                  </span>
+                </div>
+                {canManage && !ledgerManager.is_root && ledgerManager.id !== user?.id && (
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        setAdjustOpen("credit");
+                        setAdjustAmount("");
+                        setAdjustDescription("");
+                      }}
+                    >
+                      <ArrowUp className="h-4 w-4" /> {t("ledger.credit")}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => {
+                        setAdjustOpen("debit");
+                        setAdjustAmount("");
+                        setAdjustDescription("");
+                      }}
+                    >
+                      <ArrowDown className="h-4 w-4" /> {t("ledger.debit")}
+                    </Button>
+                  </div>
+                )}
+              </div>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>{t("ledger.entry_type")}</TableHead>
+                    <TableHead>{t("ledger.amount")}</TableHead>
+                    <TableHead>{t("ledger.balance_after")}</TableHead>
+                    <TableHead>{t("ledger.description")}</TableHead>
+                    <TableHead>{t("ledger.recorded_by")}</TableHead>
+                    <TableHead>{t("invoices.fields.issue_date")}</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {(ledger.data?.items ?? []).length === 0 ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={6}
+                        className="text-center text-muted-foreground py-6"
+                      >
+                        {t("ledger.no_entries")}
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    ledger.data!.items.map((entry) => (
+                      <TableRow key={entry.id}>
+                        <TableCell>
+                          <Badge variant="secondary">
+                            {t(`ledger.type.${entry.entry_type}`)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {parseFloat(entry.amount).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="font-mono text-xs">
+                          {parseFloat(entry.balance_after).toLocaleString()}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {entry.description || "—"}
+                          {entry.related_invoice_number && (
+                            <span className="block text-muted-foreground">
+                              {entry.related_invoice_number}
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {entry.recorded_by_username || "—"}
+                        </TableCell>
+                        <TableCell className="text-xs">
+                          {new Date(entry.created_at).toLocaleString()}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Credit / Debit adjustment dialog */}
+      <Dialog
+        open={adjustOpen != null}
+        onOpenChange={(v) => {
+          if (!v) setAdjustOpen(null);
+        }}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {adjustOpen === "credit"
+                ? t("ledger.credit_dialog_title")
+                : t("ledger.debit_dialog_title")}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label>{t("ledger.amount")}</Label>
+              <Input
+                value={adjustAmount}
+                onChange={(e) => setAdjustAmount(e.target.value)}
+              />
+            </div>
+            <div className="grid gap-2">
+              <Label>{t("ledger.description")}</Label>
+              <Input
+                value={adjustDescription}
+                onChange={(e) => setAdjustDescription(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setAdjustOpen(null)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              disabled={adjust.isPending || !adjustAmount}
+              onClick={async () => {
+                if (!ledgerManager || !adjustOpen) return;
+                try {
+                  await adjust.mutateAsync({
+                    id: ledgerManager.id,
+                    kind: adjustOpen,
+                    payload: {
+                      amount: adjustAmount,
+                      description: adjustDescription || undefined,
+                    },
+                  });
+                  setAdjustOpen(null);
+                } catch (err: unknown) {
+                  const msg =
+                    (err as { response?: { data?: { detail?: string } } })?.response?.data
+                      ?.detail || "Failed";
+                  window.alert(msg);
+                }
+              }}
+            >
+              {t("common.save")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

@@ -460,6 +460,173 @@ class ManagerTreeNode(BaseModel):
     children: list["ManagerTreeNode"] = []
 
 
+# ---- Phase 3: Invoices ----
+InvoiceStatus = Literal[
+    "pending", "partially_paid", "paid", "voided", "written_off"
+]
+PaymentMethod = Literal["cash", "transfer", "balance", "other"]
+LedgerEntryType = Literal[
+    "credit",
+    "debit",
+    "invoice_payment",
+    "profit_share",
+    "manual_adjustment",
+    "opening_balance",
+]
+
+
+class InvoicePaymentOut(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    invoice_id: int
+    amount: Decimal
+    method: PaymentMethod
+    paid_at: datetime
+    recorded_by_manager_id: int | None = None
+    recorded_by_username: str | None = None
+    reference: str | None = None
+    notes: str | None = None
+
+
+class InvoicePaymentCreate(BaseModel):
+    amount: Decimal = Field(gt=Decimal("0"))
+    method: PaymentMethod = "cash"
+    paid_at: datetime | None = None
+    reference: str | None = None
+    notes: str | None = None
+
+
+class InvoiceBase(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    invoice_number: str
+    subscriber_username: str
+    manager_id: int
+    manager_username: str | None = None
+    issued_by_manager_id: int | None = None
+    issued_by_username: str | None = None
+    profile_id: int | None = None
+    profile_name: str | None = None
+    description: str | None = None
+    amount: Decimal
+    vat_percent: Decimal
+    vat_amount: Decimal
+    total_amount: Decimal
+    paid_amount: Decimal
+    balance_due: Decimal
+    status: InvoiceStatus
+    issue_date: datetime
+    due_date: datetime | None = None
+    period_start: datetime | None = None
+    period_end: datetime | None = None
+    notes: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+
+class InvoiceOut(InvoiceBase):
+    pass
+
+
+class InvoiceDetail(InvoiceBase):
+    payments: list[InvoicePaymentOut] = []
+
+
+class InvoiceCreate(BaseModel):
+    subscriber_username: str
+    profile_id: int | None = None
+    description: str | None = None
+    # If `profile_id` is given and `amount` is omitted, the price is taken
+    # from the profile (incl. VAT).
+    amount: Decimal | None = None
+    vat_percent: Decimal | None = None
+    issue_date: datetime | None = None
+    due_date: datetime | None = None
+    period_start: datetime | None = None
+    period_end: datetime | None = None
+    notes: str | None = None
+
+
+class InvoiceUpdate(BaseModel):
+    description: str | None = None
+    due_date: datetime | None = None
+    notes: str | None = None
+    status: InvoiceStatus | None = None  # only "voided" / "written_off" allowed
+
+
+class RenewRequest(BaseModel):
+    """Renew a subscriber's expiration_at and (optionally) issue an invoice."""
+
+    profile_id: int | None = None  # default: current subscriber's profile
+    period_value: int | None = None  # default: profile.duration_value
+    period_unit: Literal["days", "months", "years"] | None = None
+    issue_invoice: bool = True
+    notes: str | None = None
+
+
+# ---- Phase 3: Manager ledger ----
+class ManagerLedgerEntry(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    id: int
+    manager_id: int
+    entry_type: LedgerEntryType
+    amount: Decimal
+    balance_after: Decimal
+    related_invoice_id: int | None = None
+    related_invoice_number: str | None = None
+    recorded_by_manager_id: int | None = None
+    recorded_by_username: str | None = None
+    description: str | None = None
+    notes: str | None = None
+    created_at: datetime
+
+
+class ManagerCreditDebitRequest(BaseModel):
+    amount: Decimal = Field(gt=Decimal("0"))
+    description: str | None = None
+    notes: str | None = None
+
+
+# ---- Phase 3: Reports ----
+class RevenuePoint(BaseModel):
+    bucket: str  # YYYY-MM-DD
+    invoiced_total: Decimal
+    paid_total: Decimal
+    invoice_count: int
+
+
+class ProfitSummary(BaseModel):
+    total_invoiced: Decimal
+    total_collected: Decimal
+    outstanding_subscriber_debt: Decimal
+    manager_balance_total: Decimal
+    by_manager: list["ProfitByManager"] = []
+
+
+class ProfitByManager(BaseModel):
+    manager_id: int
+    manager_username: str
+    invoiced: Decimal
+    collected: Decimal
+    outstanding: Decimal
+    user_count: int
+
+
+class DebtorRow(BaseModel):
+    type: Literal["subscriber", "manager"]
+    id: str  # username for subscriber, manager_id (str) for manager
+    label: str
+    debt: Decimal
+    manager_username: str | None = None  # owning manager (for subscribers)
+
+
+class DebtSummary(BaseModel):
+    total_subscriber_debt: Decimal
+    total_subscriber_count: int
+    total_unpaid_invoice_amount: Decimal
+    rows: list[DebtorRow] = []
+
+
 # ---- Generic ----
 class Paginated[T](BaseModel):
     items: list[T]

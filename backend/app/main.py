@@ -13,9 +13,11 @@ from .routers import (
     auth,
     dashboard,
     groups,
+    invoices,
     managers,
     nas,
     profiles,
+    reports,
     system,
     users,
 )
@@ -90,3 +92,5 @@ app.include_router(accounting.router, prefix="/api", dependencies=auth_dep)
 app.include_router(profiles.router, prefix="/api", dependencies=auth_dep)
 app.include_router(system.router, prefix="/api", dependencies=auth_dep)
 app.include_router(managers.router, prefix="/api", dependencies=auth_dep)
+app.include_router(invoices.router, prefix="/api", dependencies=auth_dep)
+app.include_router(reports.router, prefix="/api", dependencies=auth_dep)

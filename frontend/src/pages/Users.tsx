@@ -1,19 +1,22 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Plus, Pencil, Trash2, Search, Eye } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Eye, RefreshCw } from "lucide-react";
 import {
   api,
   type Paginated,
   type Profile,
+  type RenewPayload,
   type UserDetail,
   type UserStatus,
   type UserSummary,
 } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
 import { UserStatusBadge } from "@/components/UserStatusBadge";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -82,6 +85,8 @@ function isoToInputValue(iso?: string | null): string {
 export default function UsersPage() {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const { hasPermission } = useAuth();
+  const canRenew = hasPermission("users.renew");
   const [q, setQ] = useState("");
   const [statusFilter, setStatusFilter] = useState<UserStatus | "">("");
   const [page, setPage] = useState(1);
@@ -93,6 +98,29 @@ export default function UsersPage() {
 
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailUser, setDetailUser] = useState<string | null>(null);
+
+  const [renewOpen, setRenewOpen] = useState(false);
+  const [renewUser, setRenewUser] = useState<UserSummary | null>(null);
+  const [renewForm, setRenewForm] = useState<{
+    profile_id: string;
+    period_value: string;
+    period_unit: "days" | "months" | "years";
+    issue_invoice: boolean;
+  }>({
+    profile_id: "",
+    period_value: "",
+    period_unit: "days",
+    issue_invoice: true,
+  });
+
+  const renew = useMutation({
+    mutationFn: async (vars: { username: string; payload: RenewPayload }) =>
+      (await api.post(`/users/${vars.username}/renew`, vars.payload)).data,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["users"] });
+      qc.invalidateQueries({ queryKey: ["invoices"] });
+    },
+  });
 
   const list = useQuery({
     queryKey: ["users", q, statusFilter, page],
@@ -337,6 +365,25 @@ export default function UsersPage() {
                       <Button variant="ghost" size="icon" onClick={() => openEdit(u)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
+                      {canRenew && (
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            setRenewUser(u);
+                            setRenewForm({
+                              profile_id: "",
+                              period_value: "",
+                              period_unit: "days",
+                              issue_invoice: true,
+                            });
+                            setRenewOpen(true);
+                          }}
+                          aria-label={t("invoices.renew_user")}
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </Button>
+                      )}
                       <Button
                         variant="ghost"
                         size="icon"
@@ -603,6 +650,110 @@ export default function UsersPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Renew & invoice dialog */}
+      <Dialog open={renewOpen} onOpenChange={setRenewOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{t("invoices.renew_dialog_title")}</DialogTitle>
+            <DialogDescription>
+              {renewUser?.username} · {t("invoices.renew_dialog_desc")}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4">
+            <div className="grid gap-2">
+              <Label>{t("invoices.fields.profile")}</Label>
+              <Select
+                value={renewForm.profile_id}
+                onChange={(e) =>
+                  setRenewForm({ ...renewForm, profile_id: e.target.value })
+                }
+              >
+                <option value="">—</option>
+                {profiles.data?.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="grid gap-2">
+                <Label>{t("invoices.renew_period_value")}</Label>
+                <Input
+                  type="number"
+                  value={renewForm.period_value}
+                  onChange={(e) =>
+                    setRenewForm({ ...renewForm, period_value: e.target.value })
+                  }
+                  placeholder={t("invoices.create_amount_hint")}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label>{t("invoices.renew_period_unit")}</Label>
+                <Select
+                  value={renewForm.period_unit}
+                  onChange={(e) =>
+                    setRenewForm({
+                      ...renewForm,
+                      period_unit: e.target.value as "days" | "months" | "years",
+                    })
+                  }
+                >
+                  <option value="days">{t("profiles.duration_unit.days")}</option>
+                  <option value="months">{t("profiles.duration_unit.months")}</option>
+                  <option value="years">{t("profiles.duration_unit.years")}</option>
+                </Select>
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={renewForm.issue_invoice}
+                onChange={(e) =>
+                  setRenewForm({ ...renewForm, issue_invoice: e.target.checked })
+                }
+              />
+              {t("invoices.issue_invoice")}
+            </label>
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setRenewOpen(false)}>
+              {t("common.cancel")}
+            </Button>
+            <Button
+              disabled={renew.isPending}
+              onClick={async () => {
+                if (!renewUser) return;
+                try {
+                  await renew.mutateAsync({
+                    username: renewUser.username,
+                    payload: {
+                      profile_id: renewForm.profile_id
+                        ? Number(renewForm.profile_id)
+                        : undefined,
+                      period_value: renewForm.period_value
+                        ? Number(renewForm.period_value)
+                        : undefined,
+                      period_unit: renewForm.period_unit,
+                      issue_invoice: renewForm.issue_invoice,
+                    },
+                  });
+                  setRenewOpen(false);
+                  setRenewUser(null);
+                } catch (err: unknown) {
+                  const msg =
+                    (err as { response?: { data?: { detail?: string } } })?.response?.data
+                      ?.detail || "Failed";
+                  window.alert(msg);
+                }
+              }}
+            >
+              {t("common.save")}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>

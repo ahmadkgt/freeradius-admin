@@ -13,7 +13,9 @@
     "accounting": "السجلات والجلسات",
     "auth_log": "سجل المصادقة",
     "system": "معلومات النظام",
-    "managers": "المدراء"
+    "managers": "المدراء",
+    "invoices": "الفواتير",
+    "reports": "التقارير"
   },
   "common": {
     "search": "بحث",
@@ -299,5 +301,125 @@
     "confirm_password": "تأكيد كلمة المرور الجديدة",
     "password_too_short": "يجب ألا تقل كلمة المرور الجديدة عن 8 أحرف.",
     "passwords_dont_match": "كلمتا المرور الجديدتان غير متطابقتين."
+  },
+  "invoices": {
+    "title": "الفواتير",
+    "subtitle": "فواتير المشتركين والمدفوعات",
+    "create": "فاتورة جديدة",
+    "edit": "تعديل الفاتورة",
+    "delete": "حذف",
+    "void": "إلغاء",
+    "reopen": "إعادة فتح",
+    "pay": "تسجيل دفعة",
+    "view": "عرض",
+    "search_placeholder": "بحث برقم الفاتورة أو المشترك أو الوصف",
+    "no_invoices": "لا توجد فواتير",
+    "fields": {
+      "number": "رقم الفاتورة",
+      "subscriber": "المشترك",
+      "manager": "المدير",
+      "issued_by": "أصدرها",
+      "profile": "الباقة",
+      "description": "الوصف",
+      "amount": "المبلغ",
+      "vat_percent": "% ض.ق.م",
+      "vat_amount": "قيمة الضريبة",
+      "total": "الإجمالي",
+      "paid": "المدفوع",
+      "balance": "المتبقي",
+      "status": "الحالة",
+      "issue_date": "تاريخ الإصدار",
+      "due_date": "تاريخ الاستحقاق",
+      "period": "الفترة",
+      "period_start": "بداية الفترة",
+      "period_end": "نهاية الفترة",
+      "notes": "ملاحظات",
+      "payments": "الدفعات"
+    },
+    "status": {
+      "pending": "قيد الانتظار",
+      "partially_paid": "مدفوعة جزئياً",
+      "paid": "مدفوعة",
+      "voided": "ملغاة",
+      "written_off": "مشطوبة"
+    },
+    "filter_status": "تصفية حسب الحالة",
+    "all_statuses": "كل الحالات",
+    "create_for_subscriber": "اسم المستخدم للمشترك",
+    "create_amount_hint": "اتركه فارغاً لاستخدام سعر الباقة",
+    "confirm_delete": "حذف الفاتورة؟ يُسمح بالحذف فقط للفواتير قيد الانتظار أو الملغاة بدون دفعات.",
+    "confirm_void": "إلغاء هذه الفاتورة؟",
+    "renew_user": "تجديد + فاتورة",
+    "renew_dialog_title": "تجديد اشتراك",
+    "renew_dialog_desc": "تمديد تاريخ انتهاء الاشتراك مع إمكانية إصدار فاتورة تجديد.",
+    "issue_invoice": "إصدار فاتورة",
+    "renew_period_value": "المدة",
+    "renew_period_unit": "الوحدة",
+    "balance_due_label": "المبلغ المتبقي"
+  },
+  "payments": {
+    "amount": "المبلغ",
+    "method": "طريقة الدفع",
+    "paid_at": "تاريخ الدفع",
+    "reference": "مرجع",
+    "notes": "ملاحظات",
+    "method_cash": "نقداً",
+    "method_transfer": "تحويل بنكي",
+    "method_balance": "رصيد المدير",
+    "method_other": "أخرى",
+    "create": "تسجيل دفعة",
+    "history": "سجل الدفعات",
+    "amount_exceeds": "المبلغ المُدخل أكبر من الرصيد المتبقي"
+  },
+  "reports": {
+    "title": "التقارير",
+    "profit": {
+      "title": "ملخص الأرباح",
+      "total_invoiced": "إجمالي الفواتير",
+      "total_collected": "إجمالي المحصّل",
+      "outstanding_debt": "ديون المشتركين",
+      "manager_balance": "أرصدة المدراء",
+      "by_manager": "حسب المدير",
+      "invoiced": "مفوتَر",
+      "collected": "محصّل",
+      "outstanding": "متبقٍ",
+      "user_count": "المشتركون"
+    },
+    "debt": {
+      "title": "ملخص الديون",
+      "total_debt": "إجمالي ديون المشتركين",
+      "subscriber_count": "عدد المشتركين المدينين",
+      "unpaid_invoice_amount": "إجمالي الفواتير غير المدفوعة",
+      "subscriber": "مشترك",
+      "manager": "مدير",
+      "amount": "الدين"
+    },
+    "revenue": {
+      "title": "الإيرادات (آخر 30 يوماً)",
+      "invoiced": "مفوتَر",
+      "paid": "محصّل",
+      "no_data": "لا إيرادات في هذه الفترة"
+    }
+  },
+  "ledger": {
+    "title": "دفتر الحساب",
+    "credit": "إيداع",
+    "debit": "سحب",
+    "credit_dialog_title": "إضافة رصيد",
+    "debit_dialog_title": "خصم من الرصيد",
+    "amount": "المبلغ",
+    "description": "الوصف",
+    "balance_after": "الرصيد بعد",
+    "entry_type": "نوع الحركة",
+    "recorded_by": "سجّلها",
+    "type": {
+      "credit": "إيداع",
+      "debit": "سحب",
+      "invoice_payment": "دفعة فاتورة",
+      "profit_share": "حصة ربح",
+      "manual_adjustment": "تسوية يدوية",
+      "opening_balance": "رصيد افتتاحي"
+    },
+    "no_entries": "لا حركات في الدفتر"
   }
 }

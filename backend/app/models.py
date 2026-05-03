@@ -281,3 +281,137 @@ class SubscriberProfile(Base):
         default=func.current_timestamp(),
         onupdate=func.current_timestamp(),
     )
+
+
+# ===================================================================
+# Phase 3 — Invoicing + ledger
+# ===================================================================
+
+
+class Invoice(Base):
+    """An invoice issued to a subscriber."""
+
+    __tablename__ = "invoices"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    invoice_number: Mapped[str] = mapped_column(String(32), unique=True, index=True)
+    subscriber_username: Mapped[str] = mapped_column(String(64), index=True)
+    manager_id: Mapped[int] = mapped_column(
+        Integer,
+        ForeignKey("managers.id", ondelete="RESTRICT"),
+        index=True,
+    )
+    issued_by_manager_id: Mapped[int | None] = mapped_column(
+        Integer,
+        ForeignKey("managers.id", ondelete="SET NULL"),
+        nullable=True,
+    )
+    profile_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("profiles.id", ondelete="SET NULL"), nullable=True
+    )
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    amount: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), default=Decimal("0"), server_default="0"
+    )
+    vat_percent: Mapped[Decimal] = mapped_column(
+        Numeric(5, 2), default=Decimal("0"), server_default="0"
+    )
+    vat_amount: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), default=Decimal("0"), server_default="0"
+    )
+    total_amount: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), default=Decimal("0"), server_default="0"
+    )
+    paid_amount: Mapped[Decimal] = mapped_column(
+        Numeric(15, 2), default=Decimal("0"), server_default="0"
+    )
+    status: Mapped[str] = mapped_column(
+        SqlEnum(
+            "pending",
+            "partially_paid",
+            "paid",
+            "voided",
+            "written_off",
+            name="invoice_status",
+        ),
+        default="pending",
+        server_default="pending",
+        index=True,
+    )
+    issue_date: Mapped[datetime] = mapped_column(DateTime)
+    due_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    period_start: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    period_end: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.current_timestamp(), default=func.current_timestamp()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.current_timestamp(),
+        default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
+    )
+
+
+class InvoicePayment(Base):
+    """A payment recorded against an invoice."""
+
+    __tablename__ = "invoice_payments"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    invoice_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("invoices.id", ondelete="CASCADE"), index=True
+    )
+    amount: Mapped[Decimal] = mapped_column(Numeric(15, 2))
+    method: Mapped[str] = mapped_column(
+        SqlEnum("cash", "transfer", "balance", "other", name="payment_method"),
+        default="cash",
+        server_default="cash",
+    )
+    paid_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.current_timestamp(), default=func.current_timestamp()
+    )
+    recorded_by_manager_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("managers.id", ondelete="SET NULL"), nullable=True
+    )
+    reference: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.current_timestamp(), default=func.current_timestamp()
+    )
+
+
+class ManagerLedger(Base):
+    """Append-only ledger of every balance change for a manager."""
+
+    __tablename__ = "manager_ledger"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    manager_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("managers.id", ondelete="CASCADE"), index=True
+    )
+    entry_type: Mapped[str] = mapped_column(
+        SqlEnum(
+            "credit",
+            "debit",
+            "invoice_payment",
+            "profit_share",
+            "manual_adjustment",
+            "opening_balance",
+            name="ledger_entry_type",
+        ),
+    )
+    amount: Mapped[Decimal] = mapped_column(Numeric(15, 2))
+    balance_after: Mapped[Decimal] = mapped_column(Numeric(15, 2))
+    related_invoice_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("invoices.id", ondelete="SET NULL"), nullable=True
+    )
+    recorded_by_manager_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("managers.id", ondelete="SET NULL"), nullable=True
+    )
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.current_timestamp(), default=func.current_timestamp()
+    )

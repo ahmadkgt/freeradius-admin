@@ -352,3 +352,160 @@ export function hasPermission(
   if (effectivePermissions.includes("*")) return true;
   return effectivePermissions.includes(perm);
 }
+
+// ---- Phase 3: Invoices, Payments, Ledger, Reports ----
+export type InvoiceStatus =
+  | "pending"
+  | "partially_paid"
+  | "paid"
+  | "voided"
+  | "written_off";
+
+export type PaymentMethod = "cash" | "transfer" | "balance" | "other";
+
+export type LedgerEntryType =
+  | "credit"
+  | "debit"
+  | "invoice_payment"
+  | "profit_share"
+  | "manual_adjustment"
+  | "opening_balance";
+
+export interface InvoicePayment {
+  id: number;
+  invoice_id: number;
+  amount: string;
+  method: PaymentMethod;
+  paid_at: string;
+  recorded_by_manager_id?: number | null;
+  recorded_by_username?: string | null;
+  reference?: string | null;
+  notes?: string | null;
+}
+
+export interface Invoice {
+  id: number;
+  invoice_number: string;
+  subscriber_username: string;
+  manager_id: number;
+  manager_username?: string | null;
+  issued_by_manager_id?: number | null;
+  issued_by_username?: string | null;
+  profile_id?: number | null;
+  profile_name?: string | null;
+  description?: string | null;
+  amount: string;
+  vat_percent: string;
+  vat_amount: string;
+  total_amount: string;
+  paid_amount: string;
+  balance_due: string;
+  status: InvoiceStatus;
+  issue_date: string;
+  due_date?: string | null;
+  period_start?: string | null;
+  period_end?: string | null;
+  notes?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface InvoiceDetail extends Invoice {
+  payments: InvoicePayment[];
+}
+
+export interface InvoiceCreatePayload {
+  subscriber_username: string;
+  profile_id?: number | null;
+  description?: string | null;
+  amount?: string | null;
+  vat_percent?: string | null;
+  issue_date?: string | null;
+  due_date?: string | null;
+  period_start?: string | null;
+  period_end?: string | null;
+  notes?: string | null;
+}
+
+export interface InvoiceUpdatePayload {
+  description?: string | null;
+  due_date?: string | null;
+  notes?: string | null;
+  status?: InvoiceStatus | null;
+}
+
+export interface InvoicePaymentCreatePayload {
+  amount: string;
+  method?: PaymentMethod;
+  paid_at?: string | null;
+  reference?: string | null;
+  notes?: string | null;
+}
+
+export interface RenewPayload {
+  profile_id?: number | null;
+  period_value?: number | null;
+  period_unit?: "days" | "months" | "years" | null;
+  issue_invoice?: boolean;
+  notes?: string | null;
+}
+
+export interface ManagerLedgerEntry {
+  id: number;
+  manager_id: number;
+  entry_type: LedgerEntryType;
+  amount: string;
+  balance_after: string;
+  related_invoice_id?: number | null;
+  related_invoice_number?: string | null;
+  recorded_by_manager_id?: number | null;
+  recorded_by_username?: string | null;
+  description?: string | null;
+  notes?: string | null;
+  created_at: string;
+}
+
+export interface ManagerCreditDebitPayload {
+  amount: string;
+  description?: string | null;
+  notes?: string | null;
+}
+
+export interface ProfitByManager {
+  manager_id: number;
+  manager_username: string;
+  invoiced: string;
+  collected: string;
+  outstanding: string;
+  user_count: number;
+}
+
+export interface ProfitSummary {
+  total_invoiced: string;
+  total_collected: string;
+  outstanding_subscriber_debt: string;
+  manager_balance_total: string;
+  by_manager: ProfitByManager[];
+}
+
+export interface RevenuePoint {
+  bucket: string;
+  invoiced_total: string;
+  paid_total: string;
+  invoice_count: number;
+}
+
+export interface DebtorRow {
+  type: "subscriber" | "manager";
+  id: string;
+  label: string;
+  debt: string;
+  manager_username?: string | null;
+}
+
+export interface DebtSummary {
+  total_subscriber_debt: string;
+  total_subscriber_count: number;
+  total_unpaid_invoice_amount: string;
+  rows: DebtorRow[];
+}
