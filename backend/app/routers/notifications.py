@@ -163,6 +163,7 @@ def whatsapp_status(
     sess.last_error = status.last_error
     sess.last_status_at = datetime.utcnow()
     db.flush()
+    db.commit()
     return schemas.WhatsAppStatus(
         connected=status.connected,
         jid=status.jid,
@@ -208,6 +209,7 @@ def whatsapp_disconnect(
         sess.connected = False
         sess.jid = None
         sess.last_status_at = datetime.utcnow()
+    db.commit()
     return Response(status_code=204)
 
 
@@ -257,6 +259,8 @@ def create_template(
     )
     db.add(tpl)
     db.flush()
+    db.commit()
+    db.refresh(tpl)
     return tpl
 
 
@@ -279,6 +283,8 @@ def update_template(
     if not (tpl.body_ar or tpl.body_en):
         raise HTTPException(status_code=400, detail="At least one of body_ar / body_en is required")
     db.flush()
+    db.commit()
+    db.refresh(tpl)
     return tpl
 
 
@@ -292,6 +298,7 @@ def delete_template(template_id: int, db: Session = Depends(get_db)) -> Response
     if tpl is None:
         raise HTTPException(status_code=404, detail="Template not found")
     db.delete(tpl)
+    db.commit()
     return Response(status_code=204)
 
 
@@ -352,6 +359,8 @@ def send_one(
         event=event,
         gateway=gateway,
     )
+    db.commit()
+    db.refresh(note)
     return note
 
 
@@ -382,10 +391,22 @@ def send_bulk(
     )
     if payload.usernames:
         stmt = stmt.where(models.SubscriberProfile.username.in_(payload.usernames))
-    if payload.filter_status:
-        stmt = stmt.where(models.SubscriberProfile.status == payload.filter_status)
 
     subs = list(db.execute(stmt).scalars())
+
+    # `filter_status` is a derived value (computed from enabled / expiration_at /
+    # online state in users.py:_status_for). Apply it in Python after the fetch
+    # rather than against a non-existent SubscriberProfile.status column.
+    if payload.filter_status:
+        from .users import _open_session_usernames, _status_for  # local import avoids cycle
+
+        usernames = [s.username for s in subs]
+        online_set = _open_session_usernames(db, usernames)
+        subs = [
+            s for s in subs
+            if _status_for(s.enabled, s.expiration_at, s.username in online_set)
+            == payload.filter_status
+        ]
     sent = failed = 0
     rendered_notes: list[models.Notification] = []
     profile_names: dict[int, str] = {}
@@ -416,6 +437,9 @@ def send_bulk(
         else:
             failed += 1
 
+    db.commit()
+    for n in rendered_notes:
+        db.refresh(n)
     return schemas.NotificationSendResponse(
         queued=len(subs),
         sent=sent,
@@ -506,4 +530,6 @@ def retry_notification(
         note.status = "failed"
         note.error = err or "unknown error"
     db.flush()
+    db.commit()
+    db.refresh(note)
     return note

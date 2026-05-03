@@ -282,6 +282,12 @@ class SubscriberProfile(Base):
         onupdate=func.current_timestamp(),
     )
 
+    @property
+    def full_name(self) -> str | None:
+        """Composite display name from first_name + last_name (None if both blank)."""
+        joined = " ".join(p for p in (self.first_name, self.last_name) if p)
+        return joined or None
+
 
 # ===================================================================
 # Phase 3 — Invoicing + ledger
