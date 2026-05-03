@@ -15,7 +15,10 @@
     "system": "معلومات النظام",
     "managers": "المدراء",
     "invoices": "الفواتير",
-    "reports": "التقارير"
+    "reports": "التقارير",
+    "notifications": "الإشعارات",
+    "notification_templates": "قوالب الإشعارات",
+    "whatsapp": "واتساب"
   },
   "common": {
     "search": "بحث",
@@ -421,5 +424,94 @@
       "opening_balance": "رصيد افتتاحي"
     },
     "no_entries": "لا حركات في الدفتر"
+  },
+  "notifications": {
+    "title": "الإشعارات",
+    "description": "سجل رسائل واتساب: كل إشعار في قائمة الانتظار أو مُرسل أو فشل.",
+    "filter_status": "الحالة",
+    "all_statuses": "الكل",
+    "search_placeholder": "بحث بالرقم أو النص أو اسم المستخدم",
+    "status": {
+      "pending": "قيد الانتظار",
+      "sent": "مُرسلة",
+      "failed": "فشلت"
+    },
+    "event": {
+      "custom": "مخصص",
+      "renewal_reminder": "تذكير تجديد",
+      "expired": "انتهاء اشتراك",
+      "debt_warning": "تنبيه دين",
+      "invoice_issued": "فاتورة جديدة",
+      "welcome": "ترحيب"
+    },
+    "columns": {
+      "id": "#",
+      "subscriber": "المشترك",
+      "event": "الحدث",
+      "phone": "الهاتف",
+      "body": "النص",
+      "status": "الحالة",
+      "error": "خطأ",
+      "sent_at": "تاريخ الإرسال",
+      "created_at": "تاريخ الإضافة",
+      "actions": "إجراءات"
+    },
+    "retry": "إعادة المحاولة",
+    "no_messages": "لا توجد إشعارات بعد.",
+    "send_test": "إرسال رسالة اختبار",
+    "send_test_to": "الهاتف (مع رمز الدولة)",
+    "send_test_body": "نص الرسالة",
+    "send_test_send": "إرسال"
+  },
+  "notification_templates": {
+    "title": "قوالب الإشعارات",
+    "description": "اكتب قوالب واتساب باستخدام متغيرات مثل {{full_name}}, {{expiration_at}}, {{debt}}.",
+    "create": "قالب جديد",
+    "edit_dialog_title": "تعديل قالب",
+    "create_dialog_title": "قالب جديد",
+    "delete_confirm": "حذف هذا القالب؟",
+    "name": "الاسم",
+    "event": "الحدث",
+    "enabled": "مفعّل",
+    "body_ar": "النص العربي",
+    "body_en": "النص الإنجليزي",
+    "config": "إعدادات (JSON)",
+    "variables_hint": "المتغيرات المتاحة",
+    "preview": "معاينة",
+    "save": "حفظ",
+    "no_templates": "لا توجد قوالب بعد.",
+    "must_have_body": "يجب إدخال النص العربي أو الإنجليزي على الأقل."
+  },
+  "whatsapp": {
+    "title": "اتصال واتساب",
+    "description": "اربط جلسة واتساب الويب بمسح رمز الـ QR من هاتفك.",
+    "status_connected": "متصل",
+    "status_disconnected": "غير متصل",
+    "status_jid": "الهاتف المرتبط",
+    "status_last_error": "آخر خطأ",
+    "qr_scan_hint": "افتح واتساب على هاتفك ثم اذهب إلى الإعدادات ← الأجهزة المرتبطة ← ربط جهاز، وامسح هذا الرمز.",
+    "qr_loading": "في انتظار توليد رمز QR…",
+    "qr_already_paired": "مرتبط مسبقاً. اضغط فصل للحصول على رمز جديد.",
+    "qr_unavailable": "البوابة غير متاحة — تحقق من سجلات الحاوية.",
+    "refresh": "تحديث",
+    "disconnect": "فصل",
+    "disconnect_confirm": "فصل وإلزام مسح رمز QR جديد؟",
+    "send_test": "إرسال رسالة اختبار",
+    "send_to": "الهاتف (مع رمز الدولة)",
+    "send_body": "نص الرسالة",
+    "send": "إرسال"
+  },
+  "send_notification": {
+    "title": "إرسال رسالة واتساب",
+    "subscriber": "المشترك",
+    "template": "القالب",
+    "no_template": "بدون قالب (رسالة مخصصة)",
+    "locale": "اللغة",
+    "body": "نص الرسالة",
+    "body_hint": "نص مخصص — يتجاوز القالب إذا تم تعبئته.",
+    "send": "إرسال",
+    "result_sent": "تم إرسال الرسالة.",
+    "result_failed": "فشل الإرسال: {{error}}",
+    "no_phone": "لا يوجد رقم هاتف للمشترك."
   }
 }

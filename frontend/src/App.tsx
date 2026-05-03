@@ -14,6 +14,9 @@ import SystemInfoPage from "@/pages/SystemInfo";
 import ManagersPage from "@/pages/Managers";
 import InvoicesPage from "@/pages/Invoices";
 import ReportsPage from "@/pages/Reports";
+import NotificationsPage from "@/pages/Notifications";
+import NotificationTemplatesPage from "@/pages/NotificationTemplates";
+import WhatsAppPage from "@/pages/WhatsApp";
 
 export default function App() {
   return (
@@ -28,6 +31,9 @@ export default function App() {
           <Route path="managers" element={<ManagersPage />} />
           <Route path="invoices" element={<InvoicesPage />} />
           <Route path="reports" element={<ReportsPage />} />
+          <Route path="notifications" element={<NotificationsPage />} />
+          <Route path="notification-templates" element={<NotificationTemplatesPage />} />
+          <Route path="whatsapp" element={<WhatsAppPage />} />
           <Route path="groups" element={<GroupsPage />} />
           <Route path="nas" element={<NasPage />} />
           <Route path="accounting" element={<AccountingPage />} />

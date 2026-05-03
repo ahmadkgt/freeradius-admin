@@ -7,7 +7,7 @@ stored value.
 
 from typing import Final
 
-# 14 granular permissions exposed to sub-managers.
+# Granular permissions exposed to sub-managers.
 PERMISSIONS: Final[tuple[str, ...]] = (
     "users.view",
     "users.create",
@@ -23,6 +23,11 @@ PERMISSIONS: Final[tuple[str, ...]] = (
     "invoices.manage",
     "reports.view",
     "settings.manage",
+    # Phase 4 — WhatsApp + notifications
+    "notifications.view",
+    "notifications.send",
+    "notifications.templates.manage",
+    "notifications.whatsapp.manage",
 )
 
 WILDCARD: Final[str] = "*"

@@ -415,3 +415,111 @@ class ManagerLedger(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime, server_default=func.current_timestamp(), default=func.current_timestamp()
     )
+
+
+# --- Phase 4: WhatsApp + notifications ----------------------------------
+
+
+class WhatsAppSession(Base):
+    """Connection state of the per-deployment WhatsApp gateway."""
+
+    __tablename__ = "whatsapp_sessions"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    label: Mapped[str] = mapped_column(String(64), default="default", unique=True)
+    connected: Mapped[bool] = mapped_column(Boolean, default=False)
+    jid: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    last_error: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    last_status_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.current_timestamp(), default=func.current_timestamp()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.current_timestamp(),
+        default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
+    )
+
+
+class NotificationTemplate(Base):
+    """Manager-authored WhatsApp message template."""
+
+    __tablename__ = "notification_templates"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(128))
+    event: Mapped[str] = mapped_column(
+        SqlEnum(
+            "custom",
+            "renewal_reminder",
+            "expired",
+            "debt_warning",
+            "invoice_issued",
+            "welcome",
+            name="notification_event",
+        ),
+        default="custom",
+    )
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True)
+    body_ar: Mapped[str | None] = mapped_column(Text, nullable=True)
+    body_en: Mapped[str | None] = mapped_column(Text, nullable=True)
+    config: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.current_timestamp(), default=func.current_timestamp()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.current_timestamp(),
+        default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
+    )
+
+
+class Notification(Base):
+    """Append-only delivery log for WhatsApp / future channels."""
+
+    __tablename__ = "notifications"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    subscriber_username: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    manager_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("managers.id", ondelete="CASCADE"), index=True
+    )
+    template_id: Mapped[int | None] = mapped_column(
+        Integer, ForeignKey("notification_templates.id", ondelete="SET NULL"), nullable=True
+    )
+    channel: Mapped[str] = mapped_column(
+        SqlEnum("whatsapp", name="notification_channel"), default="whatsapp"
+    )
+    event: Mapped[str] = mapped_column(
+        SqlEnum(
+            "custom",
+            "renewal_reminder",
+            "expired",
+            "debt_warning",
+            "invoice_issued",
+            "welcome",
+            name="notification_event_log",
+        ),
+        default="custom",
+    )
+    phone: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    body: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(
+        SqlEnum("pending", "sent", "failed", name="notification_status"),
+        default="pending",
+        index=True,
+    )
+    error: Mapped[str | None] = mapped_column(String(512), nullable=True)
+    provider_message_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime, server_default=func.current_timestamp(), default=func.current_timestamp()
+    )
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        server_default=func.current_timestamp(),
+        default=func.current_timestamp(),
+        onupdate=func.current_timestamp(),
+    )

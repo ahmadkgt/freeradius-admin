@@ -1,0 +1,20 @@
+{
+  "name": "freeradius-admin-whatsapp",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Self-hosted WhatsApp gateway for the FreeRADIUS admin panel (Baileys-based)",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@whiskeysockets/baileys": "^6.7.16",
+    "express": "^4.21.2",
+    "pino": "^9.5.0",
+    "qrcode": "^1.5.4"
+  }
+}

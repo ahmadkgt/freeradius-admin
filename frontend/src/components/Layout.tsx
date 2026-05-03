@@ -21,6 +21,9 @@ import {
   Network,
   Receipt,
   BarChart3,
+  MessageSquare,
+  FileText,
+  Bell,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -52,6 +55,24 @@ const navItems: NavItem[] = [
   { to: "/managers", labelKey: "nav.managers", Icon: Network, perm: "managers.view" },
   { to: "/invoices", labelKey: "nav.invoices", Icon: Receipt, perm: "invoices.view" },
   { to: "/reports", labelKey: "nav.reports", Icon: BarChart3, perm: "reports.view" },
+  {
+    to: "/notifications",
+    labelKey: "nav.notifications",
+    Icon: Bell,
+    perm: "notifications.view",
+  },
+  {
+    to: "/notification-templates",
+    labelKey: "nav.notification_templates",
+    Icon: FileText,
+    perm: "notifications.view",
+  },
+  {
+    to: "/whatsapp",
+    labelKey: "nav.whatsapp",
+    Icon: MessageSquare,
+    perm: "notifications.whatsapp.manage",
+  },
   { to: "/groups", labelKey: "nav.groups", Icon: UsersRound },
   { to: "/nas", labelKey: "nav.nas", Icon: Server },
   { to: "/accounting", labelKey: "nav.accounting", Icon: Activity },

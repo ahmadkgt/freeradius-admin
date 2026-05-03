@@ -18,6 +18,8 @@ from sqlalchemy.orm import Session
 from .. import models, schemas
 from ..database import get_db
 from ..security import get_current_manager, require_permission, visible_manager_ids
+from ..services import render
+from ..services.whatsapp import get_gateway, normalize_phone
 
 router = APIRouter(prefix="/invoices", tags=["invoices"])
 
@@ -355,6 +357,87 @@ def _create_invoice_for_subscriber(
     return inv
 
 
+def _notify_invoice_issued(
+    db: Session,
+    *,
+    subscriber: models.SubscriberProfile,
+    invoice: models.Invoice,
+    profile: models.Profile | None,
+    locale: str = "ar",
+) -> None:
+    """Best-effort send of an `invoice_issued` notification for `invoice`.
+
+    Called from create_invoice / renew_subscriber after the invoice is
+    committed. Failures are swallowed (logged via Notification.error) so
+    a flaky WhatsApp gateway never blocks issuing the invoice itself.
+    """
+    template = db.execute(
+        select(models.NotificationTemplate)
+        .where(models.NotificationTemplate.event == "invoice_issued")
+        .where(models.NotificationTemplate.enabled == True)  # noqa: E712
+        .order_by(models.NotificationTemplate.id.asc())
+        .limit(1)
+    ).scalar_one_or_none()
+    if template is None:
+        return
+    raw = (
+        (template.body_ar if locale == "ar" else template.body_en)
+        or template.body_en
+        or template.body_ar
+    )
+    if not raw:
+        return
+    body = render.render(
+        raw,
+        {
+            "username": subscriber.username,
+            "full_name": subscriber.full_name or subscriber.username,
+            "phone": subscriber.phone or "",
+            "expiration_at": subscriber.expiration_at,
+            "debt": subscriber.debt,
+            "balance": subscriber.balance,
+            "profile_id": profile.id if profile else None,
+            "profile_name": profile.name if profile else None,
+            "invoice_number": invoice.invoice_number,
+            "amount": invoice.total_amount,
+        },
+    )
+    phone = normalize_phone(subscriber.phone)
+    note = models.Notification(
+        subscriber_username=subscriber.username,
+        manager_id=subscriber.manager_id or invoice.manager_id,
+        template_id=template.id,
+        channel="whatsapp",
+        event="invoice_issued",
+        phone=phone,
+        body=body,
+        status="pending",
+    )
+    db.add(note)
+    db.flush()
+    if not phone:
+        note.status = "failed"
+        note.error = "subscriber has no phone number"
+        return
+    if not body.strip():
+        note.status = "failed"
+        note.error = "rendered message body is empty"
+        return
+    gateway = get_gateway()
+    if not gateway.configured:
+        note.status = "failed"
+        note.error = "WhatsApp gateway not configured"
+        return
+    ok, message_id, err = gateway.send(phone, body)
+    if ok:
+        note.status = "sent"
+        note.provider_message_id = message_id
+        note.sent_at = datetime.utcnow()
+    else:
+        note.status = "failed"
+        note.error = err or "send failed"
+
+
 @router.post(
     "",
     response_model=schemas.InvoiceOut,
@@ -378,6 +461,12 @@ def create_invoice(
     inv = _create_invoice_for_subscriber(
         db, subscriber=sub, payload=payload, current=current
     )
+    profile = db.get(models.Profile, inv.profile_id) if inv.profile_id else None
+    # Best-effort WhatsApp notification — never block invoice creation.
+    try:
+        _notify_invoice_issued(db, subscriber=sub, invoice=inv, profile=profile)
+    except Exception:  # pragma: no cover — defensive
+        pass
     db.commit()
     db.refresh(inv)
 
@@ -620,5 +709,12 @@ def renew_subscriber(
             ),
             current=current,
         )
+        # Best-effort WhatsApp notification on renewal-with-invoice.
+        try:
+            _notify_invoice_issued(
+                db, subscriber=subscriber, invoice=invoice, profile=profile
+            )
+        except Exception:  # pragma: no cover — defensive
+            pass
     db.flush()
     return subscriber, invoice
