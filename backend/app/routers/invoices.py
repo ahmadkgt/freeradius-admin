@@ -60,30 +60,31 @@ def _generate_invoice_number(db: Session) -> str:
     Atomically allocates the next sequence number for the current year via
     the `invoice_sequences` counter table:
 
-        INSERT INTO invoice_sequences (year, last_seq) VALUES (:y, 1)
+        INSERT INTO invoice_sequences (year, last_seq) VALUES (:y, LAST_INSERT_ID(1))
         ON DUPLICATE KEY UPDATE last_seq = LAST_INSERT_ID(last_seq + 1);
 
-    `last_seq` stores the most recently allocated number. On the INSERT
-    path (no row for the year yet) we claim seq=1 and seed the row with
-    last_seq=1. On the UPDATE path, `LAST_INSERT_ID(expr)` lets us pull the
-    incremented value back without a second SELECT. Two concurrent callers
-    serialize on the row's X-lock, so each one gets a distinct seq — no
-    UNIQUE constraint races on `invoice_number`.
+    `last_seq` stores the most recently allocated number. Wrapping the
+    INSERT value in `LAST_INSERT_ID(1)` is a MySQL idiom that explicitly
+    sets the connection-level LAST_INSERT_ID, so the subsequent
+    `SELECT LAST_INSERT_ID()` returns the value we just claimed on **both**
+    code paths — without it, the INSERT path would return whatever stale
+    value was left on the pooled connection by a previous UPDATE-path call,
+    producing wrong (and eventually colliding) invoice numbers when the
+    table starts empty for a new year.
+
+    Two concurrent callers serialize on the row's X-lock, so each one gets
+    a distinct seq — no UNIQUE constraint races on `invoice_number`.
     """
     year = datetime.utcnow().year
     db.execute(
         text(
-            "INSERT INTO invoice_sequences (year, last_seq) VALUES (:y, 1) "
+            "INSERT INTO invoice_sequences (year, last_seq) "
+            "VALUES (:y, LAST_INSERT_ID(1)) "
             "ON DUPLICATE KEY UPDATE last_seq = LAST_INSERT_ID(last_seq + 1)"
         ),
         {"y": year},
     )
     seq = db.execute(text("SELECT LAST_INSERT_ID()")).scalar()
-    if not seq:
-        # INSERT path: the table has no AUTO_INCREMENT key, so
-        # LAST_INSERT_ID() returns 0; we just seeded last_seq=1 and that's
-        # the number we claim.
-        seq = 1
     return f"INV-{year}-{int(seq):06d}"
 
 
