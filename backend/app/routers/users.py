@@ -618,6 +618,16 @@ def renew_user(
     current: models.Manager = Depends(get_current_manager),
 ) -> schemas.UserDetail:
     """Push a subscriber's expiration_at forward and (optionally) issue an invoice."""
+    # Verify the RADIUS user actually exists before any mutation. Otherwise we
+    # would create orphaned SubscriberProfile / Invoice rows for a username
+    # that has no RadCheck entries (only reachable as root, since non-root
+    # managers fail the in-scope check below first).
+    radcheck_exists = db.execute(
+        select(models.RadCheck.id).where(models.RadCheck.username == username).limit(1)
+    ).scalar_one_or_none()
+    if radcheck_exists is None:
+        raise HTTPException(status_code=404, detail="User not found")
+
     sub = _ensure_user_in_scope(db, username, current)
     if sub is None:
         # _ensure_user_in_scope returns None for root if no row exists; create one

@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from decimal import Decimal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import desc, func, or_, select
+from sqlalchemy import desc, func, or_, select, text
 from sqlalchemy.orm import Session
 
 from .. import models, schemas
@@ -55,22 +55,36 @@ def _profile_name_map(db: Session, profile_ids: list[int]) -> dict[int, str]:
 
 
 def _generate_invoice_number(db: Session) -> str:
-    """Return a sequential invoice number like INV-YYYY-000123."""
+    """Return a sequential invoice number like INV-YYYY-000123.
+
+    Atomically allocates the next sequence number for the current year via
+    the `invoice_sequences` counter table:
+
+        INSERT INTO invoice_sequences (year, last_seq) VALUES (:y, 1)
+        ON DUPLICATE KEY UPDATE last_seq = LAST_INSERT_ID(last_seq + 1);
+
+    `last_seq` stores the most recently allocated number. On the INSERT
+    path (no row for the year yet) we claim seq=1 and seed the row with
+    last_seq=1. On the UPDATE path, `LAST_INSERT_ID(expr)` lets us pull the
+    incremented value back without a second SELECT. Two concurrent callers
+    serialize on the row's X-lock, so each one gets a distinct seq — no
+    UNIQUE constraint races on `invoice_number`.
+    """
     year = datetime.utcnow().year
-    prefix = f"INV-{year}-"
-    last = db.execute(
-        select(models.Invoice.invoice_number)
-        .where(models.Invoice.invoice_number.like(f"{prefix}%"))
-        .order_by(desc(models.Invoice.id))
-        .limit(1)
-    ).scalar_one_or_none()
-    next_seq = 1
-    if last:
-        try:
-            next_seq = int(last.split("-")[-1]) + 1
-        except ValueError:
-            next_seq = 1
-    return f"{prefix}{next_seq:06d}"
+    db.execute(
+        text(
+            "INSERT INTO invoice_sequences (year, last_seq) VALUES (:y, 1) "
+            "ON DUPLICATE KEY UPDATE last_seq = LAST_INSERT_ID(last_seq + 1)"
+        ),
+        {"y": year},
+    )
+    seq = db.execute(text("SELECT LAST_INSERT_ID()")).scalar()
+    if not seq:
+        # INSERT path: the table has no AUTO_INCREMENT key, so
+        # LAST_INSERT_ID() returns 0; we just seeded last_seq=1 and that's
+        # the number we claim.
+        seq = 1
+    return f"INV-{year}-{int(seq):06d}"
 
 
 def _to_out(
