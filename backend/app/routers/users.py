@@ -606,6 +606,35 @@ def delete_user(
     db.commit()
 
 
+@router.post(
+    "/{username}/renew",
+    response_model=schemas.UserDetail,
+    dependencies=[Depends(require_permission("users.renew"))],
+)
+def renew_user(
+    username: str,
+    payload: schemas.RenewRequest,
+    db: Session = Depends(get_db),
+    current: models.Manager = Depends(get_current_manager),
+) -> schemas.UserDetail:
+    """Push a subscriber's expiration_at forward and (optionally) issue an invoice."""
+    sub = _ensure_user_in_scope(db, username, current)
+    if sub is None:
+        # _ensure_user_in_scope returns None for root if no row exists; create one
+        # so the renew has somewhere to write expiration_at.
+        sub = models.SubscriberProfile(username=username, manager_id=current.id)
+        db.add(sub)
+        db.flush()
+
+    # Lazy import to avoid a circular dependency with the invoices router.
+    from .invoices import renew_subscriber
+
+    renew_subscriber(db, subscriber=sub, payload=payload, current=current)
+    db.commit()
+
+    return _hydrate_user_detail(username, db)
+
+
 # Free-form attribute management endpoints --------------------------------------------------------
 @router.post(
     "/{username}/check",

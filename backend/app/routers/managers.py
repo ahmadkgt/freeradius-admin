@@ -1,9 +1,16 @@
-"""Phase 2 — managers/resellers CRUD with hierarchy and RBAC scoping."""
+"""Phase 2 — managers/resellers CRUD with hierarchy and RBAC scoping.
+
+Phase 3 added:
+- GET  /managers/{id}/ledger        — read the running balance log
+- POST /managers/{id}/credit        — add funds to a child manager
+- POST /managers/{id}/debit         — withdraw funds from a child manager
+"""
 
 from collections import defaultdict
+from decimal import Decimal
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import func, select
+from fastapi import APIRouter, Depends, HTTPException, Query, status
+from sqlalchemy import desc, func, select
 from sqlalchemy.orm import Session
 
 from .. import models, permissions, schemas
@@ -329,3 +336,211 @@ def delete_manager(
             db.delete(sub)
     db.delete(m)
     db.commit()
+
+
+# --- Phase 3: ledger / credit / debit ----------------------------------
+
+
+def _ledger_to_out(
+    entry: models.ManagerLedger,
+    invoice_number: str | None,
+    recorded_by_username: str | None,
+) -> schemas.ManagerLedgerEntry:
+    return schemas.ManagerLedgerEntry(
+        id=entry.id,
+        manager_id=entry.manager_id,
+        entry_type=entry.entry_type,
+        amount=entry.amount,
+        balance_after=entry.balance_after,
+        related_invoice_id=entry.related_invoice_id,
+        related_invoice_number=invoice_number,
+        recorded_by_manager_id=entry.recorded_by_manager_id,
+        recorded_by_username=recorded_by_username,
+        description=entry.description,
+        notes=entry.notes,
+        created_at=entry.created_at,
+    )
+
+
+def _ensure_manager_in_scope(
+    db: Session, manager_id: int, current: models.Manager
+) -> models.Manager:
+    visible = visible_manager_ids(db, current)
+    if manager_id not in visible:
+        raise HTTPException(status_code=404, detail="Manager not found")
+    m = db.get(models.Manager, manager_id)
+    if m is None:
+        raise HTTPException(status_code=404, detail="Manager not found")
+    return m
+
+
+@router.get(
+    "/{manager_id}/ledger",
+    response_model=schemas.Paginated[schemas.ManagerLedgerEntry],
+)
+def get_manager_ledger(
+    manager_id: int,
+    page: int = Query(1, ge=1),
+    page_size: int = Query(50, ge=1, le=200),
+    db: Session = Depends(get_db),
+    current: models.Manager = Depends(require_permission("managers.view")),
+) -> schemas.Paginated[schemas.ManagerLedgerEntry]:
+    _ensure_manager_in_scope(db, manager_id, current)
+
+    base = select(models.ManagerLedger).where(
+        models.ManagerLedger.manager_id == manager_id
+    )
+    total = db.execute(
+        select(func.count()).select_from(base.subquery())
+    ).scalar_one()
+    rows = list(
+        db.execute(
+            base.order_by(desc(models.ManagerLedger.id))
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        .scalars()
+        .all()
+    )
+
+    invoice_ids = {r.related_invoice_id for r in rows if r.related_invoice_id}
+    invoice_numbers: dict[int, str] = {}
+    if invoice_ids:
+        ir = db.execute(
+            select(models.Invoice.id, models.Invoice.invoice_number).where(
+                models.Invoice.id.in_(invoice_ids)
+            )
+        ).all()
+        invoice_numbers = {iid: inum for iid, inum in ir}
+
+    recorder_ids = {r.recorded_by_manager_id for r in rows if r.recorded_by_manager_id}
+    recorder_names: dict[int, str] = {}
+    if recorder_ids:
+        rr = db.execute(
+            select(models.Manager.id, models.Manager.username).where(
+                models.Manager.id.in_(recorder_ids)
+            )
+        ).all()
+        recorder_names = {mid: uname for mid, uname in rr}
+
+    items = [
+        _ledger_to_out(
+            r,
+            invoice_number=(
+                invoice_numbers.get(r.related_invoice_id)
+                if r.related_invoice_id
+                else None
+            ),
+            recorded_by_username=(
+                recorder_names.get(r.recorded_by_manager_id)
+                if r.recorded_by_manager_id
+                else None
+            ),
+        )
+        for r in rows
+    ]
+    return schemas.Paginated(items=items, total=int(total), page=page, page_size=page_size)
+
+
+def _post_ledger(
+    db: Session,
+    *,
+    manager_id: int,
+    entry_type: str,
+    amount: Decimal,
+    description: str | None,
+    notes: str | None,
+    recorded_by_manager_id: int | None,
+    related_invoice_id: int | None = None,
+) -> models.ManagerLedger:
+    """Append a ledger entry and update Manager.balance. Caller commits."""
+    m = db.get(models.Manager, manager_id)
+    if m is None:
+        raise HTTPException(status_code=404, detail="Manager not found")
+    new_balance = (m.balance or Decimal("0")) + amount
+    m.balance = new_balance
+    entry = models.ManagerLedger(
+        manager_id=manager_id,
+        entry_type=entry_type,
+        amount=amount,
+        balance_after=new_balance,
+        related_invoice_id=related_invoice_id,
+        recorded_by_manager_id=recorded_by_manager_id,
+        description=description,
+        notes=notes,
+    )
+    db.add(entry)
+    db.flush()
+    return entry
+
+
+@router.post(
+    "/{manager_id}/credit",
+    response_model=schemas.ManagerLedgerEntry,
+    status_code=status.HTTP_201_CREATED,
+)
+def credit_manager(
+    manager_id: int,
+    payload: schemas.ManagerCreditDebitRequest,
+    db: Session = Depends(get_db),
+    current: models.Manager = Depends(require_permission("managers.manage")),
+) -> schemas.ManagerLedgerEntry:
+    """Add funds to a child manager. Cannot self-credit."""
+    if manager_id == current.id and not current.is_root:
+        raise HTTPException(
+            status_code=403,
+            detail="Cannot credit yourself — ask a parent manager.",
+        )
+    m = _ensure_manager_in_scope(db, manager_id, current)
+    if m.is_root:
+        raise HTTPException(status_code=400, detail="Root manager balance is not managed")
+
+    amount = Decimal(payload.amount)
+    entry = _post_ledger(
+        db,
+        manager_id=manager_id,
+        entry_type="credit",
+        amount=amount,
+        description=payload.description or "Manual credit",
+        notes=payload.notes,
+        recorded_by_manager_id=current.id,
+    )
+    db.commit()
+    db.refresh(entry)
+    return _ledger_to_out(entry, None, current.username)
+
+
+@router.post(
+    "/{manager_id}/debit",
+    response_model=schemas.ManagerLedgerEntry,
+    status_code=status.HTTP_201_CREATED,
+)
+def debit_manager(
+    manager_id: int,
+    payload: schemas.ManagerCreditDebitRequest,
+    db: Session = Depends(get_db),
+    current: models.Manager = Depends(require_permission("managers.manage")),
+) -> schemas.ManagerLedgerEntry:
+    """Withdraw funds from a child manager (e.g. recover unpaid balance)."""
+    if manager_id == current.id and not current.is_root:
+        raise HTTPException(
+            status_code=403,
+            detail="Cannot debit yourself — ask a parent manager.",
+        )
+    m = _ensure_manager_in_scope(db, manager_id, current)
+    if m.is_root:
+        raise HTTPException(status_code=400, detail="Root manager balance is not managed")
+
+    amount = Decimal(payload.amount)
+    entry = _post_ledger(
+        db,
+        manager_id=manager_id,
+        entry_type="debit",
+        amount=-amount,
+        description=payload.description or "Manual debit",
+        notes=payload.notes,
+        recorded_by_manager_id=current.id,
+    )
+    db.commit()
+    db.refresh(entry)
+    return _ledger_to_out(entry, None, current.username)

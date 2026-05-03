@@ -13,7 +13,9 @@
     "accounting": "Accounting",
     "auth_log": "Auth log",
     "system": "System info",
-    "managers": "Managers"
+    "managers": "Managers",
+    "invoices": "Invoices",
+    "reports": "Reports"
   },
   "common": {
     "search": "Search",
@@ -299,5 +301,125 @@
     "confirm_password": "Confirm new password",
     "password_too_short": "New password must be at least 8 characters.",
     "passwords_dont_match": "New passwords do not match."
+  },
+  "invoices": {
+    "title": "Invoices",
+    "subtitle": "Subscriber billing and payments",
+    "create": "New invoice",
+    "edit": "Edit invoice",
+    "delete": "Delete invoice",
+    "void": "Void",
+    "reopen": "Reopen",
+    "pay": "Record payment",
+    "view": "View",
+    "search_placeholder": "Search by number, subscriber or description",
+    "no_invoices": "No invoices",
+    "fields": {
+      "number": "Invoice #",
+      "subscriber": "Subscriber",
+      "manager": "Manager",
+      "issued_by": "Issued by",
+      "profile": "Plan",
+      "description": "Description",
+      "amount": "Amount",
+      "vat_percent": "VAT %",
+      "vat_amount": "VAT amount",
+      "total": "Total",
+      "paid": "Paid",
+      "balance": "Balance due",
+      "status": "Status",
+      "issue_date": "Issued",
+      "due_date": "Due",
+      "period": "Period",
+      "period_start": "Period start",
+      "period_end": "Period end",
+      "notes": "Notes",
+      "payments": "Payments"
+    },
+    "status": {
+      "pending": "Pending",
+      "partially_paid": "Partially paid",
+      "paid": "Paid",
+      "voided": "Voided",
+      "written_off": "Written off"
+    },
+    "filter_status": "Filter by status",
+    "all_statuses": "All statuses",
+    "create_for_subscriber": "Subscriber username",
+    "create_amount_hint": "Leave blank to use the plan's price",
+    "confirm_delete": "Delete this invoice? Only pending or voided invoices with no payments can be deleted.",
+    "confirm_void": "Mark this invoice as voided?",
+    "renew_user": "Renew & invoice",
+    "renew_dialog_title": "Renew subscriber",
+    "renew_dialog_desc": "Extend the subscriber's expiration and optionally issue a renewal invoice.",
+    "issue_invoice": "Issue an invoice",
+    "renew_period_value": "Period",
+    "renew_period_unit": "Unit",
+    "balance_due_label": "Outstanding balance"
+  },
+  "payments": {
+    "amount": "Amount",
+    "method": "Method",
+    "paid_at": "Paid at",
+    "reference": "Reference",
+    "notes": "Notes",
+    "method_cash": "Cash",
+    "method_transfer": "Bank transfer",
+    "method_balance": "Manager balance",
+    "method_other": "Other",
+    "create": "Record payment",
+    "history": "Payment history",
+    "amount_exceeds": "Payment amount exceeds outstanding balance"
+  },
+  "reports": {
+    "title": "Reports",
+    "profit": {
+      "title": "Profit summary",
+      "total_invoiced": "Total invoiced",
+      "total_collected": "Total collected",
+      "outstanding_debt": "Subscriber debt",
+      "manager_balance": "Manager balances",
+      "by_manager": "By manager",
+      "invoiced": "Invoiced",
+      "collected": "Collected",
+      "outstanding": "Outstanding",
+      "user_count": "Users"
+    },
+    "debt": {
+      "title": "Debt summary",
+      "total_debt": "Total subscriber debt",
+      "subscriber_count": "Subscribers in debt",
+      "unpaid_invoice_amount": "Unpaid invoices total",
+      "subscriber": "Subscriber",
+      "manager": "Manager",
+      "amount": "Debt"
+    },
+    "revenue": {
+      "title": "Revenue (last 30 days)",
+      "invoiced": "Invoiced",
+      "paid": "Collected",
+      "no_data": "No revenue in this period"
+    }
+  },
+  "ledger": {
+    "title": "Ledger",
+    "credit": "Credit",
+    "debit": "Debit",
+    "credit_dialog_title": "Add credit",
+    "debit_dialog_title": "Withdraw funds",
+    "amount": "Amount",
+    "description": "Description",
+    "balance_after": "Balance after",
+    "entry_type": "Entry type",
+    "recorded_by": "Recorded by",
+    "type": {
+      "credit": "Credit",
+      "debit": "Debit",
+      "invoice_payment": "Invoice payment",
+      "profit_share": "Profit share",
+      "manual_adjustment": "Adjustment",
+      "opening_balance": "Opening balance"
+    },
+    "no_entries": "No ledger entries"
   }
 }

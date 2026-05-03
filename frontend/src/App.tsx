@@ -12,6 +12,8 @@ import ProfilesPage from "@/pages/Profiles";
 import OnlineUsersPage from "@/pages/OnlineUsers";
 import SystemInfoPage from "@/pages/SystemInfo";
 import ManagersPage from "@/pages/Managers";
+import InvoicesPage from "@/pages/Invoices";
+import ReportsPage from "@/pages/Reports";
 
 export default function App() {
   return (
@@ -24,6 +26,8 @@ export default function App() {
           <Route path="online-users" element={<OnlineUsersPage />} />
           <Route path="profiles" element={<ProfilesPage />} />
           <Route path="managers" element={<ManagersPage />} />
+          <Route path="invoices" element={<InvoicesPage />} />
+          <Route path="reports" element={<ReportsPage />} />
           <Route path="groups" element={<GroupsPage />} />
           <Route path="nas" element={<NasPage />} />
           <Route path="accounting" element={<AccountingPage />} />

@@ -19,6 +19,8 @@ import {
   Package,
   Cpu,
   Network,
+  Receipt,
+  BarChart3,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,6 +50,8 @@ const navItems: NavItem[] = [
   { to: "/online-users", labelKey: "nav.online_users", Icon: Wifi, perm: "users.view" },
   { to: "/profiles", labelKey: "nav.profiles", Icon: Package, perm: "profiles.view" },
   { to: "/managers", labelKey: "nav.managers", Icon: Network, perm: "managers.view" },
+  { to: "/invoices", labelKey: "nav.invoices", Icon: Receipt, perm: "invoices.view" },
+  { to: "/reports", labelKey: "nav.reports", Icon: BarChart3, perm: "reports.view" },
   { to: "/groups", labelKey: "nav.groups", Icon: UsersRound },
   { to: "/nas", labelKey: "nav.nas", Icon: Server },
   { to: "/accounting", labelKey: "nav.accounting", Icon: Activity },
